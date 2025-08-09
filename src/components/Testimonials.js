@@ -11,57 +11,48 @@ export default function Testimonials() {
   const testimonials = [
     {
       id: 1,
-      name: "Budi Santoso",
+      name: "Rubung Tanggara",
       role: "Event Organizer",
       company: "PT. Kreatif Indonesia",
       rating: 5,
-      text: "MAXPRO sangat profesional dalam pelayanan. Proyektor yang disewa kualitasnya bagus, pengantaran tepat waktu, dan tim teknisinya sangat membantu setup acara seminar kami. Highly recommended!",
+      text: "Pelayanan baik, harga bersahabat, barang yg dipinjamkan selalu dicek dahulu sebelum dipakai konsumen. Sangat disarankan menyebutkan tujuan peminjaman, agar barang yg disediakan oleh tim maxpro sesuai keperluan.",
       event: "Seminar Bisnis 2024",
     },
     {
       id: 2,
-      name: "Sari Dewi",
+      name: "Angela Auralia",
       role: "Wedding Organizer",
       company: "Elegant Wedding",
       rating: 5,
-      text: "Pelayanan MAXPRO luar biasa! TV LED yang disewa untuk acara pernikahan klien kami berkualitas premium. Setup cepat, operator profesional, dan harga sangat terjangkau. Pasti akan sewa lagi!",
+      text: "Harga terjangkau, kualitas barang sewaan oke dan dikasi banyak bonus. Joss pokoknya.",
       event: "Wedding Reception",
     },
     {
       id: 3,
-      name: "Ahmad Rizki",
+      name: "Yoga Pptra",
       role: "Koordinator Acara",
       company: "Universitas Gadjah Mada",
       rating: 5,
-      text: "Sudah beberapa kali sewa sound system dan proyektor di MAXPRO untuk acara kampus. Alat selalu dalam kondisi prima, teknisi berpengalaman, dan response admin sangat cepat. Top service!",
+      text: "Barang bagusss, menyala dengan sempurnaaaa🔥🔥",
       event: "Conference Akademik",
     },
     {
       id: 4,
-      name: "Linda Puspita",
+      name: "Yogi Herawan",
       role: "Marketing Manager",
       company: "CV. Maju Bersama",
       rating: 5,
-      text: "Pengalaman sewa di MAXPRO sangat memuaskan. Untuk launching produk kami, mereka menyediakan setup multimedia lengkap dengan kualitas HD. Tim support juga standby selama acara berlangsung.",
+      text: "Harga terjangkau, komunikasi mudah",
       event: "Product Launch",
     },
     {
       id: 5,
-      name: "Doni Prasetyo",
+      name: "Tri Purwoko",
       role: "HRD Manager",
       company: "Bank Mandiri Cabang Yogya",
       rating: 5,
-      text: "MAXPRO solusi terbaik untuk kebutuhan multimedia corporate. Peralatan modern, instalasi profesional, dan after-service yang memuaskan. Sudah menjadi partner tetap untuk event kantor kami.",
+      text: "Sangat puas",
       event: "Corporate Training",
-    },
-    {
-      id: 6,
-      name: "Maya Sari",
-      role: "Event Coordinator",
-      company: "Pemda DIY",
-      rating: 5,
-      text: "Pelayanan MAXPRO sangat membantu acara pemerintahan kami. Sound system outdoor berkualitas tinggi, megaphone jernih, dan tim teknisi yang dapat diandalkan. Terima kasih MAXPRO!",
-      event: "Acara Pemerintahan",
     },
   ];
 
@@ -199,21 +190,17 @@ export default function Testimonials() {
                       {renderStars(testimonials[currentIndex].rating)}
                     </div>
 
-                    <h3 className="text-xl lg:text-2xl font-bold text-white">
+                    <h3 className="text-xl lg:text-2xl font-bold text-red-400">
                       {testimonials[currentIndex].name}
                     </h3>
 
-                    <p className="text-red-400 font-medium">
+                    {/* <p className="text-red-400 font-medium">
                       {testimonials[currentIndex].role}
-                    </p>
+                    </p> */}
 
                     {/* <p className="text-gray-400">
                       {testimonials[currentIndex].company}
                     </p> */}
-
-                    <div className="inline-block bg-blue-500/10 text-blue-400 px-4 py-2 rounded-full text-sm font-medium mt-4">
-                      {testimonials[currentIndex].event}
-                    </div>
                   </motion.div>
                 </div>
               </motion.div>

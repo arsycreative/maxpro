@@ -2,281 +2,159 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  ChatBubbleLeftRightIcon,
-  CreditCardIcon,
-  TruckIcon,
-} from "@heroicons/react/24/outline";
+import Image from "next/image";
 
 export default function HowToRent() {
   const steps = [
     {
-      id: "01",
-      title: "Konsultasi",
-      subtitle: "WhatsApp Admin",
-      description:
-        "Diskusikan kebutuhan detail acara Anda dengan tim profesional kami",
-      icon: ChatBubbleLeftRightIcon,
+      id: "1",
+      title: "WhatsApp Admin",
+      description: "Ceritakan detail tanggal, lokasi, dan kebutuhan acaramu.",
       image:
         "https://imgsrv2.voi.id/CIr-uKm0lGrzoKPl6TwDkReqLuDKtLnPXKchbdywPL4/auto/1200/675/sm/1/bG9jYWw6Ly8vcHVibGlzaGVycy8xMDQ4MjIvdm9pLWNhcmEtY2VrLWtvbnRhay13aGF0c2FwcC15YW5nLXNlcmluZy1jaGF0LmpwZw.jpg",
-      features: [
-        "Konsultasi 24/7",
-        "Estimasi Real-time",
-        "Rekomendasi Expert",
-        "Survey Lokasi",
-      ],
-      accent: "from-violet-600 to-purple-600",
-      bgAccent: "bg-violet-50",
-      iconColor: "text-violet-600",
+      gradient: "from-indigo-600 to-blue-700",
+      iconBg: "bg-indigo-500",
     },
     {
-      id: "02",
-      title: "Reservasi",
-      subtitle: "Booking & Payment",
-      description:
-        "Amankan jadwal dan peralatan dengan sistem booking yang mudah dan aman",
-      icon: CreditCardIcon,
+      id: "2",
+      title: "Booking Unit",
+      description: "Booking unit via DP untuk mengunci jadwal unit.",
       image:
         "https://custom-images.strikinglycdn.com/res/hrscywv4p/image/upload/c_limit%2Cfl_lossy%2Ch_9000%2Cw_1200%2Cf_auto%2Cq_auto/8103728/225639_419736.jpeg",
-      features: [
-        "Booking Instan",
-        "Payment Fleksibel",
-        "Garansi Jadwal",
-        "Konfirmasi Otomatis",
-      ],
-      accent: "from-emerald-600 to-teal-600",
-      bgAccent: "bg-emerald-50",
-      iconColor: "text-emerald-600",
+      gradient: "from-emerald-600 to-teal-700",
+      iconBg: "bg-emerald-500",
     },
     {
-      id: "03",
-      title: "Eksekusi",
-      subtitle: "Setup & Support",
-      description:
-        "Tim ahli kami menangani instalasi dan memberikan support penuh selama acara",
-      icon: TruckIcon,
+      id: "3",
+      title: "Delivery",
+      description: "Unit diantar sesuai waktu yang disepakati.",
       image:
         "https://theoneupgroup.com/wp-content/uploads/2023/06/Rigging-Staging-The-One-Up-Group-scaled.jpeg",
-      features: [
-        "Delivery Tepat Waktu",
-        "Setup Profesional",
-        "Technical Support",
-        "Pickup Service",
-      ],
-      accent: "from-orange-600 to-red-600",
-      bgAccent: "bg-orange-50",
-      iconColor: "text-orange-600",
+      gradient: "from-violet-600 to-purple-700",
+      iconBg: "bg-violet-500",
     },
   ];
 
   return (
-    <section className="py-32 bg-gradient-to-br from-slate-50 via-white to-gray-50 relative overflow-hidden">
+    <section className="py-32 relative overflow-hidden">
+      {/* Premium Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50"></div>
+
       {/* Sophisticated Background Elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 -left-20 w-96 h-96 bg-gradient-to-r from-blue-100/40 to-purple-100/40 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 -right-20 w-96 h-96 bg-gradient-to-r from-orange-100/40 to-pink-100/40 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-emerald-50/30 to-teal-50/30 rounded-full blur-3xl"></div>
+      <div className="absolute inset-0 opacity-40">
+        <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-to-br from-indigo-200/30 to-blue-300/30 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-to-br from-violet-200/30 to-purple-300/30 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-to-br from-emerald-200/20 to-teal-300/20 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
-        {/* Header with Advanced Typography */}
+      {/* Subtle Grid Pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.02]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      ></div>
+
+      <div className="container mx-auto px-6 relative z-10">
+        {/* Elegant Header */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mb-24"
+          className="text-center mb-11"
         >
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-8 leading-[1.1]">
-            Tiga Tahap Menuju
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="inline-block mb-6"
+          ></motion.div>
+
+          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight tracking-tight">
+            Cara Menyewa Alat
             <br />
-            <span className="bg-gradient-to-r from-red-600 via-pink-600 to-orange-600 bg-clip-text text-transparent">
-              Acara Sempurna
+            <span className="bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
+              Multimedia
             </span>
           </h2>
-
-          <div className="max-w-2xl mx-auto">
-            <p className="text-xl text-gray-600 leading-relaxed mb-6">
-              Pengalaman menyewa multimedia yang dirancang untuk memberikan
-              hasil terbaik dengan proses yang efisien dan profesional
-            </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-red-500 to-pink-500 mx-auto rounded-full"></div>
-          </div>
         </motion.div>
 
-        {/* Advanced Step Cards */}
-        <div className="max-w-7xl mx-auto">
-          <div className="space-y-20">
+        {/* Horizontal Layout like in reference */}
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
             {steps.map((step, index) => (
               <motion.div
                 key={step.id}
-                initial={{ opacity: 0, y: 60 }}
+                initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{
-                  duration: 0.8,
+                  duration: 0.7,
                   delay: index * 0.2,
                   ease: "easeOut",
                 }}
-                viewport={{ once: true, margin: "-100px" }}
-                className={`flex flex-col ${
-                  index % 2 === 1 ? "lg:flex-row-reverse" : "lg:flex-row"
-                } items-center gap-12 lg:gap-20`}
+                viewport={{ once: true }}
+                whileHover={{ y: -8 }}
+                className="group relative flex-1 max-w-sm"
               >
-                {/* Content Side */}
-                <div className="flex-1 space-y-8">
-                  {/* Step Number with Advanced Design */}
-                  <div className="flex items-center space-x-6">
-                    <motion.div
-                      whileHover={{ scale: 1.05, rotate: 5 }}
-                      transition={{ duration: 0.3 }}
-                      className={`relative w-20 h-20 bg-gradient-to-br ${step.accent} rounded-2xl flex items-center justify-center shadow-xl group overflow-hidden`}
-                    >
-                      <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <span className="text-2xl font-bold text-white relative z-10">
+                {/* Clean Card Design */}
+                <div className="bg-white rounded-2xl shadow-lg group-hover:shadow-xl transition-all duration-500 overflow-hidden relative">
+                  {/* Step Number - Inside card like reference */}
+                  <div className="absolute top-4 left-4 z-10">
+                    <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-xl font-bold text-gray-800">
                         {step.id}
                       </span>
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-white/30 rounded-full"></div>
-                    </motion.div>
-
-                    <div>
-                      <h3 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                        {step.title}
-                      </h3>
-                      <p
-                        className={`text-lg font-semibold bg-gradient-to-r ${step.accent} bg-clip-text text-transparent`}
-                      >
-                        {step.subtitle}
-                      </p>
                     </div>
                   </div>
 
-                  {/* Description */}
-                  <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
-                    {step.description}
-                  </p>
-
-                  {/* Feature Grid */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {step.features.map((feature, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, x: -30 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.6 + idx * 0.1, duration: 0.5 }}
-                        viewport={{ once: true }}
-                        whileHover={{ x: 4 }}
-                        className={`flex items-center space-x-3 p-4 ${step.bgAccent} rounded-xl border border-white/50 hover:shadow-md transition-all duration-300`}
-                      >
-                        <div
-                          className={`w-2 h-2 bg-gradient-to-r ${step.accent} rounded-full`}
-                        ></div>
-                        <span className="text-gray-700 font-medium text-sm">
-                          {feature}
-                        </span>
-                      </motion.div>
-                    ))}
+                  {/* Image Section - Taller and rounded like reference */}
+                  <div className="relative h-64 overflow-hidden rounded-t-2xl">
+                    <Image
+                      src={step.image}
+                      alt={step.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
+                      loading="lazy"
+                    />
                   </div>
 
-                  {/* Action Button */}
-                  <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <button
-                      className={`inline-flex items-center space-x-3 px-8 py-4 bg-gradient-to-r ${step.accent} text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 group`}
-                    >
-                      <step.icon className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
-                      <span>Mulai {step.title}</span>
-                      <svg
-                        className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </button>
-                  </motion.div>
+                  {/* Content - Taller padding */}
+                  <div className="p-8 text-center">
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">
+                      {step.title}
+                    </h3>
+                    <p className="text-gray-600 leading-relaxed text-sm">
+                      {step.description}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Visual Side */}
-                <div className="flex-1 relative">
-                  <motion.div
-                    whileHover={{ scale: 1.02, rotate: 1 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="relative group"
-                  >
-                    {/* Main Image Container */}
-                    <div className="relative overflow-hidden rounded-3xl shadow-2xl">
-                      <img
-                        src={step.image}
-                        alt={step.title}
-                        className="w-full h-80 lg:h-96 object-cover group-hover:scale-105 transition-transform duration-700"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
-
-                      {/* Floating Icon */}
-                      <div className="absolute bottom-6 left-6">
-                        <div className="w-16 h-16 bg-white/95 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-xl">
-                          <step.icon className={`w-8 h-8 ${step.iconColor}`} />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Decorative Elements */}
-                    <div
-                      className={`absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br ${step.accent} opacity-20 rounded-2xl -z-10 group-hover:rotate-12 transition-transform duration-500`}
-                    ></div>
-                    <div
-                      className={`absolute -bottom-4 -left-4 w-32 h-32 bg-gradient-to-br ${step.accent} opacity-10 rounded-3xl -z-10 group-hover:-rotate-6 transition-transform duration-500`}
-                    ></div>
-                  </motion.div>
-
-                  {/* Connection Line to Next Step */}
-                  {index < steps.length - 1 && (
-                    <motion.div
-                      initial={{ scaleY: 0 }}
-                      whileInView={{ scaleY: 1 }}
-                      transition={{ duration: 1, delay: 0.8 }}
-                      viewport={{ once: true }}
-                      className="hidden lg:block absolute -bottom-10 left-1/2 w-0.5 h-20 bg-gradient-to-b from-gray-300 to-transparent transform -translate-x-1/2 origin-top"
-                    ></motion.div>
-                  )}
-                </div>
+                {/* Arrow connector for desktop - similar to reference */}
+                {index < steps.length - 1 && (
+                  <div className="hidden lg:block absolute top-1/2 -right-6 transform -translate-y-1/2 z-20">
+                    <div className="text-gray-300 text-2xl">→</div>
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>
         </div>
 
-        {/* Premium CTA Section */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
           viewport={{ once: true }}
-          className="text-center mt-32"
+          className="text-center mt-11"
         >
-          {/* Service Area Notice */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            viewport={{ once: true }}
-            className="mt-8"
-          >
-            <div className="inline-block bg-amber-50/80 backdrop-blur-sm border border-amber-200/50 rounded-xl px-6 py-3">
-              <p className="text-amber-800 font-medium">
-                <span className="font-bold">Area Layanan:</span> Yogyakarta,
-                Bantul, Sleman, Gunung Kidul, Kulonprogo
-              </p>
-            </div>
-          </motion.div>
+          <div className="inline-block bg-amber-50 border border-amber-200 rounded-2xl px-8 py-6 shadow-lg">
+            <p className="text-amber-800 font-semibold text-lg">
+              <span className="font-bold">Area Layanan:</span> Yogyakarta,
+              Bantul, Sleman, Gunung Kidul, Kulonprogo
+            </p>
+          </div>
         </motion.div>
       </div>
     </section>

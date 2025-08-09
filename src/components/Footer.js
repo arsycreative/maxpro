@@ -62,7 +62,7 @@ export default function Footer() {
 
               <p className="text-gray-300 mb-6 leading-relaxed">
                 Solusi terpercaya untuk kebutuhan multimedia event Anda. Sejak
-                2022, kami melayani dengan profesional dan berkualitas.
+                2020, kami melayani dengan profesional dan berkualitas.
               </p>
             </motion.div>
 
@@ -236,7 +236,7 @@ export default function Footer() {
                     MAXPRO
                   </span>
                   . All rights reserved. | Rental Multimedia Terpercaya Sejak
-                  2022
+                  2020
                 </p>
               </div>
 

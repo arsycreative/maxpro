@@ -76,7 +76,7 @@ export default function AdvancedAdvantages() {
   const features = [
     "1000+ Happy Customer",
     "Fast respon dan ontime",
-    "Pengalaman sejak 2022",
+    "Pengalaman sejak 2020",
     "Kualitas alat terjamin",
   ];
 
@@ -183,7 +183,7 @@ export default function AdvancedAdvantages() {
                 {[
                   { number: "1000+", label: "Happy Customers" },
                   { number: "100%", label: "Fast Response" },
-                  { number: "2022", label: "Pengalaman Sejak" },
+                  { number: "2020", label: "Pengalaman Sejak" },
                   { number: "24/7", label: "Kualitas Terjamin" },
                 ].map((stat, index) => (
                   <motion.div
@@ -365,14 +365,6 @@ export default function AdvancedAdvantages() {
                   </svg>
                   <span>Konsultasi Sekarang</span>
                 </motion.a>
-
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-transparent border-2 border-gray-600 px-8 py-4 rounded-full text-white font-semibold hover:bg-gray-600/10 hover:border-gray-500 transition-all duration-300"
-                >
-                  Lihat Portfolio
-                </motion.button>
               </motion.div>
             </motion.div>
           </div>

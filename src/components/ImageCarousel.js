@@ -62,7 +62,7 @@ const AdvancedImageCarousel = () => {
     },
     {
       id: 8,
-      url: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
+      url: "https://theoneupgroup.com/wp-content/uploads/2023/06/Rigging-Staging-The-One-Up-Group-scaled.jpeg",
       alt: "Stage Equipment",
       title: "Stage Setup",
       description: "Peralatan panggung lengkap",

@@ -15,6 +15,7 @@ import {
   Check,
   MessageCircle,
 } from "lucide-react";
+import { redirectToWhatsApp } from "@/app/utils/whatsapp";
 
 // Animation variants
 const fadeInUp = {
@@ -312,6 +313,9 @@ const PromoCards = () => {
                   scale: 1.02,
                   boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
                 }}
+                onClick={() =>
+                  redirectToWhatsApp("Halo, saya mau tanya tentang produk")
+                }
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.2 }}
                 initial={{ opacity: 0, y: 20 }}
@@ -458,7 +462,7 @@ const Hero = () => {
                 }}
               ></motion.div>
               <span className="text-red-400 font-semibold drop-shadow-lg">
-                Sejak 2022 • Terpercaya
+                Sejak 2020 • Terpercaya
               </span>
             </motion.div>
 
@@ -535,7 +539,7 @@ const Hero = () => {
                 <span className="font-semibold">
                   Jogja, Bantul, Sleman, Gunung Kidul, Kulonprogo
                 </span>{" "}
-                dengan layanan terpercaya sejak 2022.
+                dengan layanan terpercaya sejak 2020.
               </motion.p>
             </motion.div>
 
@@ -549,7 +553,7 @@ const Hero = () => {
               {[
                 { number: "1000+", label: "Happy Customers" },
                 { number: "100%", label: "On Time Delivery" },
-                { number: "2022", label: "Since" },
+                { number: "2020", label: "Since" },
               ].map((stat, index) => (
                 <motion.div
                   key={index}
@@ -591,6 +595,9 @@ const Hero = () => {
               <motion.button
                 className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 px-8 py-4 rounded-2xl text-white font-bold flex items-center justify-center space-x-3 shadow-2xl group"
                 variants={slideInFromLeft}
+                onClick={() =>
+                  redirectToWhatsApp("Halo, saya mau tanya tentang produk")
+                }
                 whileHover={{
                   scale: 1.05,
                   boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",

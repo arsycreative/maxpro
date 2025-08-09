@@ -47,7 +47,7 @@ export default function EventTypes() {
       title: "Pameran",
       subtitle: "indoor hall",
       image:
-        "https://images.squarespace-cdn.com/content/v1/5423dde2e4b00c40b1ccf4cb/b5ba2efe-21aa-4bc3-80d2-012999f58fd4/IMG_9791_textron_aviation_australasia_customer_conference_2022_novasoma_photography.jpg",
+        "https://images.squarespace-cdn.com/content/v1/5423dde2e4b00c40b1ccf4cb/b5ba2efe-21aa-4bc3-80d2-012999f58fd4/IMG_9791_textron_aviation_australasia_customer_conference_2020_novasoma_photography.jpg",
       description: "Display produk dengan teknologi multimedia terdepan",
       features: ["TV LED multiple", "Digital signage", "Interactive display"],
       gradient: "from-purple-500/20 to-violet-500/20",
@@ -174,6 +174,48 @@ export default function EventTypes() {
             </motion.div>
           ))}
         </div>
+
+        {/* Flow Indicator to Next Section */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          viewport={{ once: true }}
+          className="flex flex-col items-center mt-16"
+        >
+          {/* Animated Arrow */}
+          <motion.div
+            animate={{
+              y: [0, 8, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="flex flex-col items-center"
+          >
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              className="w-12 h-12 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center shadow-lg"
+            >
+              <svg
+                className="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                />
+              </svg>
+            </motion.div>
+            <div className="w-px h-8 bg-gradient-to-b from-red-500/60 to-transparent"></div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );

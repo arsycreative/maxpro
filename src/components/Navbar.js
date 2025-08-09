@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bars3Icon, XMarkIcon, PhoneIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { redirectToWhatsApp } from "@/app/utils/whatsapp";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -87,18 +88,18 @@ export default function Navbar() {
             ))}
 
             {/* WhatsApp Button */}
-            <motion.a
+            <motion.button
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.5 }}
-              href="https://wa.me/6285712165658"
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={() =>
+                redirectToWhatsApp("Halo, saya mau tanya tentang produk")
+              }
               className="btn-whatsapp px-4 lg:px-6 py-2 lg:py-3 rounded-full text-white font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl transform transition-all duration-300"
             >
               <PhoneIcon className="w-4 h-4 lg:w-5 lg:h-5" />
               <span className="text-sm lg:text-base">WhatsApp</span>
-            </motion.a>
+            </motion.button>
           </div>
 
           {/* Mobile menu button */}
@@ -157,11 +158,11 @@ export default function Navbar() {
                 className="pt-4 border-t border-gray-700"
               >
                 <a
-                  href="https://wa.me/6285712165658"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={() => {
+                    redirectToWhatsApp("Halo, saya mau tanya tentang produk");
+                    toggleMenu();
+                  }}
                   className="btn-whatsapp w-full px-6 py-3 rounded-lg text-white font-medium flex items-center justify-center space-x-2 shadow-lg"
-                  onClick={toggleMenu}
                 >
                   <PhoneIcon className="w-5 h-5" />
                   <span>WhatsApp Sekarang</span>
