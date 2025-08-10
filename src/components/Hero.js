@@ -330,7 +330,7 @@ const PromoCards = () => {
         </AnimatePresence>
 
         {/* Nav Buttons */}
-        <motion.button
+        {/* <motion.button
           onClick={prevSlide}
           className="absolute -left-4 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow-sm z-50"
           whileHover={{ scale: 1.1, x: -2 }}
@@ -345,7 +345,7 @@ const PromoCards = () => {
           whileTap={{ scale: 0.9 }}
         >
           <ChevronRight className="w-5 h-5 text-gray-600" />
-        </motion.button>
+        </motion.button> */}
       </div>
 
       {/* Dots */}

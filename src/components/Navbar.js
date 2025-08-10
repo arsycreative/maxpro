@@ -24,10 +24,14 @@ export default function Navbar() {
 
   const navItems = [
     { name: "Home", href: "/" },
+    { name: "Katalog", href: "/catalog" },
     { name: "Kontak", href: "/contact" },
   ];
 
   const toggleMenu = () => setIsOpen(!isOpen);
+
+  const firstSegment = pathname?.split("/")[1];
+  if (firstSegment === "admin") return null;
 
   return (
     <motion.nav

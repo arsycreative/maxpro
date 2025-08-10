@@ -4,8 +4,10 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
   const services = [
     "Sewa Proyektor",
     "Sewa TV LED",
@@ -23,10 +25,8 @@ export default function Footer() {
     "Kulonprogo",
   ];
 
-  const quickLinks = [
-    { name: "Home", href: "/" },
-    { name: "Kontak", href: "/contact" },
-  ];
+  const firstSegment = pathname?.split("/")[1];
+  if (firstSegment === "admin") return null;
 
   return (
     <footer className="relative bg-black overflow-hidden">
@@ -248,22 +248,6 @@ export default function Footer() {
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span>Online 24/7</span>
                 </motion.div>
-
-                <div className="flex items-center space-x-4">
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors duration-300"
-                  >
-                    Privacy Policy
-                  </a>
-                  <span>•</span>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors duration-300"
-                  >
-                    Terms of Service
-                  </a>
-                </div>
               </div>
             </div>
           </div>
