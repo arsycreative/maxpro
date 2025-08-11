@@ -54,11 +54,13 @@ export default function AdminCatalogManagement() {
   const categories = [
     "Semua",
     "Proyektor",
-    "TV LED",
-    "Speaker",
-    "Screen",
-    "Flipchart",
-    "Megaphone",
+    "Layar",
+    "Audio",
+    "Video",
+    "Aksesoris",
+    "Paket",
+    "Kabel",
+    "Lainnya",
   ];
 
   useEffect(() => {
