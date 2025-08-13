@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
+import imageCompression from "browser-image-compression";
 import {
   Plus,
   Edit,
@@ -41,6 +42,7 @@ export default function AdminCatalogManagement() {
     image: "",
     features: [],
     badge: "",
+    suitable: "",
   });
   const [newFeature, setNewFeature] = useState("");
   const [notification, setNotification] = useState(null);
@@ -53,6 +55,7 @@ export default function AdminCatalogManagement() {
 
   const categories = [
     "Semua",
+    "Promo",
     "Proyektor",
     "Layar",
     "Audio",
@@ -132,13 +135,13 @@ export default function AdminCatalogManagement() {
     try {
       setUploading(true);
 
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2)}.${fileExt}`;
-      const filePath = `products/${fileName}`; // jangan mulai dengan '/'
+      // Pastikan file punya nama (sudah dibuat di handleImageChange)
+      const fileName =
+        file.name ||
+        `${Date.now()}-${Math.random().toString(36).substring(2)}.jpg`;
+      const filePath = `products/${fileName}`;
 
-      // upload ke bucket yang sudah ada: product-images
+      // Supabase storage expects File/Blob — kita kirim langsung
       const { data, error } = await supabase.storage
         .from("product-images")
         .upload(filePath, file, {
@@ -148,7 +151,6 @@ export default function AdminCatalogManagement() {
 
       if (error) {
         console.error("Upload error:", error);
-        // tangani kasus paling umum
         if (error.status === 404) {
           showNotification(
             "Bucket 'product-images' tidak ditemukan. Buat bucket lewat Supabase Dashboard.",
@@ -168,12 +170,11 @@ export default function AdminCatalogManagement() {
         return null;
       }
 
-      // getPublicUrl (synchronous)
+      // getPublicUrl
       const { data: publicData } = supabase.storage
         .from("product-images")
         .getPublicUrl(filePath);
 
-      // publicData.publicUrl jika bucket public
       return publicData?.publicUrl ?? null;
     } catch (err) {
       console.error("Error uploading image:", err);
@@ -190,12 +191,13 @@ export default function AdminCatalogManagement() {
       title: "",
       category: "",
       price: "",
-      originalPrice: "", // Pastikan ini string kosong, bukan undefined
+      originalPrice: "",
       rating: 5,
       description: "",
       image: "",
       features: [],
       badge: "",
+      suitable: "",
     });
     setNewFeature("");
     setEditingProduct(null);
@@ -209,12 +211,13 @@ export default function AdminCatalogManagement() {
         title: product.title || "",
         category: product.category || "",
         price: product.price || "",
-        originalPrice: product.originalPrice || "", // Pastikan tidak undefined
+        originalPrice: product.originalPrice || "",
         rating: product.rating || 5,
         description: product.description || "",
         image: product.image || "",
         features: product.features || [],
         badge: product.badge || "",
+        suitable: product.suitable || "",
       });
       setEditingProduct(product);
       setImagePreview(product.image || null);
@@ -225,31 +228,66 @@ export default function AdminCatalogManagement() {
   };
 
   const handleImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const originalFile = e.target.files?.[0];
+    if (!originalFile) return;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
+    // Validasi tipe
+    if (!originalFile.type.startsWith("image/")) {
       showNotification("File harus berupa gambar", "error");
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showNotification("Ukuran file maksimal 5MB", "error");
-      return;
-    }
+    try {
+      setUploading(true);
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => setImagePreview(e.target.result);
-    reader.readAsDataURL(file);
+      // Opsi kompresi (sesuaikan target size / dimensi)
+      const options = {
+        maxSizeMB: 1, // target ukuran ~ <= 1MB (bisa ubah)
+        maxWidthOrHeight: 1600, // maksimal sisi terpanjang
+        useWebWorker: true,
+        initialQuality: 0.8,
+      };
 
-    // Upload to Supabase
-    const imageUrl = await uploadImage(file);
-    if (imageUrl) {
-      setFormData({ ...formData, image: imageUrl });
-      showNotification("Gambar berhasil diupload", "success");
+      // Kompresi (menghasilkan File/Blob)
+      const compressedBlobOrFile = await imageCompression(
+        originalFile,
+        options
+      );
+
+      // Buat File dengan nama unik agar supabase punya filename
+      const fileExt = (originalFile.name || "jpg").split(".").pop();
+      const uploadFileName = `${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2)}.${fileExt}`;
+      const compressedFile = new File([compressedBlobOrFile], uploadFileName, {
+        type: compressedBlobOrFile.type || originalFile.type,
+      });
+
+      // Optional: reject bila masih terlalu besar
+      if (compressedFile.size > 5 * 1024 * 1024) {
+        showNotification(
+          "Ukuran file masih lebih dari 5MB setelah kompresi",
+          "error"
+        );
+        setUploading(false);
+        return;
+      }
+
+      // Preview (object URL lebih cepat daripada FileReader)
+      const previewUrl = URL.createObjectURL(compressedFile);
+      setImagePreview(previewUrl);
+
+      // Upload ke Supabase (gunakan compressedFile)
+      const imageUrl = await uploadImage(compressedFile);
+      if (imageUrl) {
+        setFormData({ ...formData, image: imageUrl });
+        showNotification("Gambar berhasil diupload", "success");
+      }
+    } catch (err) {
+      console.error("Error kompresi/upload gambar:", err);
+      showNotification("Terjadi kesalahan saat memproses gambar", "error");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -889,6 +927,22 @@ export default function AdminCatalogManagement() {
                       rows={4}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none resize-none bg-white text-gray-900"
                       placeholder="Deskripsi lengkap produk..."
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Cocok untuk:
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.suitable}
+                      onChange={(e) =>
+                        setFormData({ ...formData, suitable: e.target.value })
+                      }
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none bg-white text-gray-900"
+                      placeholder="Perfect untuk pameran & meeting room"
                     />
                   </div>
 

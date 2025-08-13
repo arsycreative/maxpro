@@ -11,6 +11,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.54.0",
+    "browser-image-compression": "^2.0.2",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.536.0",
     "next": "15.4.5",

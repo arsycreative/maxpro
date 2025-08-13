@@ -29,7 +29,10 @@ export default function CatalogPage() {
   useEffect(() => {
     const fetchCatalog = async () => {
       setLoading(true);
-      const { data, error } = await supabase.from("products").select("*");
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .neq("category", "Promo");
       if (error) {
         console.error("Error fetching catalog:", error);
       } else {

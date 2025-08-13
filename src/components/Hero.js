@@ -16,6 +16,8 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { redirectToWhatsApp } from "@/app/utils/whatsapp";
+import Image from "next/image";
+import { supabase } from "@/lib/supabaseClient";
 
 // Animation variants
 const fadeInUp = {
@@ -65,307 +67,213 @@ const scaleIn = {
   },
 };
 
-// PromoCards Component with Framer Motion
+const slideVariants = {
+  hidden: { opacity: 0, x: 30, scale: 0.98 },
+  visible: { opacity: 1, x: 0, scale: 1 },
+  exit: { opacity: 0, x: -30, scale: 0.98 },
+};
+
+const formatPrice = (val) => {
+  // jika mendapat angka -> tambahkan "k"
+  if (typeof val === "number") return `${val}k`;
+  // jika string dan sudah ada 'k' atau non-digit, coba ekstrak angka
+  if (typeof val === "string") {
+    if (val.trim().endsWith("k")) return val.trim();
+    // ambil digit dari string (mis. '350' atau '350k' atau '350.0')
+    const digits = val.replace(/[^\d]/g, "");
+    if (digits === "") return val;
+    return `${parseInt(digits, 10)}k`;
+  }
+  return val;
+};
+
+// PromoCards (Next Image + proporsional)
 const PromoCards = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [promoData, setPromoData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const promoData = [
-    {
-      id: 1,
-      title: "Sewa TV LED Premium",
-      subtitle: "Free Standing Bracket + Setup",
-      originalPrice: "550k",
-      discountPrice: "350k",
-      unit: "/unit",
-      badge: "Diskon 36%",
-      badgeColor: "bg-gradient-to-r from-emerald-500 to-emerald-600",
-      features: [
-        "Top brand Samsung / LG",
-        "Free Standing Bracket",
-        "Port USB & HDMI lengkap",
-        "Setup & maintenance included",
-      ],
-      suitable: "Perfect untuk pameran & meeting room",
-      gradient: "from-blue-500/10 via-indigo-500/10 to-purple-500/10",
-      accentColor: "border-blue-500/30",
-    },
-    {
-      id: 2,
-      title: "Proyektor Professional",
-      subtitle: "High Lumens & Crystal Clear",
-      originalPrice: "400k",
-      discountPrice: "300k",
-      unit: "/unit",
-      badge: "Best Seller",
-      badgeColor: "bg-gradient-to-r from-orange-500 to-red-500",
-      features: [
-        "2700-5000 Lumens range",
-        "Free kabel VGA & HDMI",
-        "Optimal untuk ruang besar",
-        "Teknologi DLP terbaru",
-      ],
-      suitable: "Ideal untuk seminar & presentasi",
-      gradient: "from-emerald-500/10 via-teal-500/10 to-cyan-500/10",
-      accentColor: "border-emerald-500/30",
-    },
-    {
-      id: 3,
-      title: "Speaker System Pro",
-      subtitle: "Wireless Mics Included",
-      originalPrice: "450k",
-      discountPrice: "350k",
-      unit: "/unit",
-      badge: "Promo Terbatas",
-      badgeColor: "bg-gradient-to-r from-purple-500 to-pink-500",
-      features: [
-        "Speaker aktif 12 inch",
-        "2x Mic wireless premium",
-        "Battery tahan 8+ jam",
-        "Indoor & outdoor ready",
-      ],
-      suitable: "Cocok untuk event outdoor & gathering",
-      gradient: "from-orange-500/10 via-red-500/10 to-pink-500/10",
-      accentColor: "border-orange-500/30",
-    },
-    {
-      id: 4,
-      title: "Paket Seminar Complete",
-      subtitle: "All-in-One Solution",
-      originalPrice: "800k",
-      discountPrice: "650k",
-      unit: "/paket",
-      badge: "Hemat 19%",
-      badgeColor: "bg-gradient-to-r from-indigo-500 to-blue-500",
-      features: [
-        "Proyektor 3200 Lumens",
-        "Screen premium 2x2m",
-        "Sound system + 2 mic",
-        "Teknisi & operator included",
-      ],
-      suitable: "Solution terbaik untuk seminar besar",
-      gradient: "from-violet-500/10 via-purple-500/10 to-fuchsia-500/10",
-      accentColor: "border-violet-500/30",
-    },
-  ];
-
+  // ambil data dari Supabase pada mount
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % promoData.length);
-    }, 6000);
-    return () => clearInterval(timer);
+    let isMounted = true;
+
+    async function fetchPromos() {
+      setLoading(true);
+      try {
+        // ambil semua kolom relevan. adjust select() kalau butuh kolom lain.
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("category", "Promo")
+          .order("id", { ascending: true });
+
+        if (error) throw error;
+
+        if (!isMounted) return;
+
+        // normalisasi data agar kompatibel dengan UI
+        const normalized = (data || []).map((p) => ({
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          // prefer integer field originalPrice, fallback to originalprice (string)
+          originalprice:
+            p.originalPrice ?? p.originalprice ?? p.originalPriceInt ?? null,
+          // prefer integer 'price_int' or parse 'price' string; fallback to p.price
+          price:
+            p.price_int ??
+            (() => {
+              if (p.price == null) return null;
+              if (typeof p.price === "number") return p.price;
+              // if string like '350k' or '350' -> extract digits
+              const digits = ("" + p.price).replace(/[^\d]/g, "");
+              return digits ? parseInt(digits, 10) : p.price;
+            })(),
+          features: Array.isArray(p.features)
+            ? p.features
+            : p.features
+            ? [p.features]
+            : [],
+          suitable: p.suitable ?? p.suitable_for ?? null,
+          image: p.image ?? null,
+          raw: p, // simpan raw jika perlu debugging
+        }));
+
+        setPromoData(normalized);
+      } catch (err) {
+        console.error("Failed to fetch promo products:", err);
+        setPromoData([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    fetchPromos();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const nextSlide = () =>
-    setCurrentSlide((prev) => (prev + 1) % promoData.length);
-  const prevSlide = () =>
-    setCurrentSlide((prev) => (prev - 1 + promoData.length) % promoData.length);
+  // auto slide (hanya aktif jika ada data)
+  useEffect(() => {
+    if (!promoData || promoData.length === 0) return;
+    const t = setInterval(
+      () => setCurrentSlide((s) => (s + 1) % promoData.length),
+      6000
+    );
+    return () => clearInterval(t);
+  }, [promoData.length]);
 
-  const currentPromo = promoData[currentSlide];
+  if (loading) {
+    return (
+      <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div className="text-center text-sm text-gray-500">
+          Loading promos...
+        </div>
+      </div>
+    );
+  }
+
+  if (!promoData.length) {
+    return (
+      <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div className="text-center text-sm text-gray-500">
+          No promo products found.
+        </div>
+      </div>
+    );
+  }
+
+  const promo = promoData[currentSlide];
 
   return (
-    <motion.div
-      className="relative w-full max-w-lg mx-auto bg-white p-6 rounded-xl shadow-lg border border-gray-200"
-      initial="hidden"
-      animate="visible"
-      variants={slideInFromRight}
-    >
-      {/* Enhanced Ribbon "Promo Eksklusif" */}
-      <div className="absolute top-1 right-2 transform translate-x-1/5 -translate-y-1/2 rotate-15 bg-red-600 text-white font-bold rounded-md text-sm uppercase px-5 py-2 shadow-lg z-50">
-        Promo Eksklusif
-      </div>
+    <motion.div className="relative w-full max-w-md mx-auto bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={promo.id}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.38, ease: "easeOut" }}
+          className="flex flex-col gap-3"
+        >
+          {/* Gambar */}
+          <div className="relative rounded-md overflow-hidden w-full aspect-square max-h-60">
+            {promo.image ? (
+              <Image
+                src={promo.image}
+                alt={promo.title}
+                fill
+                sizes="(max-width: 768px) 90vw, 320px"
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                No image
+              </div>
+            )}
+            <div className="absolute top-2 right-2 bg-gradient-to-r from-red-600 to-red-500 text-white px-2 py-0.5 rounded-full text-[11px] font-semibold">
+              PROMO
+            </div>
+          </div>
 
-      {/* Slider Container */}
-      <div className="relative overflow-visible px-4 pt-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentSlide}
-            initial={{ opacity: 0, x: 100, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -100, scale: 0.9 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            whileHover={{ scale: 1.02, y: -5 }}
-          >
-            <motion.div
-              className={`bg-white border-l-4 ${currentPromo.accentColor} rounded-xl p-6 shadow-md`}
-              whileHover={{ boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Badge */}
-              <motion.div
-                className={`${currentPromo.badgeColor} text-white px-3 py-1 rounded-full text-sm font-semibold mb-4 inline-block`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {currentPromo.badge}
-              </motion.div>
+          {/* Konten */}
+          <div>
+            <h3 className="text-base font-semibold text-gray-800 mb-0.5">
+              {promo.title}
+            </h3>
+            <p className="text-xs text-gray-500 mb-2">{promo.description}</p>
 
-              {/* Title */}
-              <motion.h4
-                className="text-xl font-bold text-gray-800 mb-2"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                {currentPromo.title}
-              </motion.h4>
-              <motion.p
-                className="text-gray-500 text-sm mb-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                {currentPromo.subtitle}
-              </motion.p>
-
-              {/* Pricing */}
-              <motion.div
-                className="mb-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-gray-400 text-xs line-through">
-                    {currentPromo.originalPrice}
-                  </span>
-                  <motion.span
-                    className="text-red-500 text-xs font-bold uppercase"
-                    animate={{
-                      scale: [1, 1.1, 1],
-                      color: ["#ef4444", "#dc2626", "#ef4444"],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                  >
-                    Save
-                  </motion.span>
+            {/* Harga */}
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="text-[11px] text-gray-400 line-through">
+                  {formatPrice(promo.originalprice)}
                 </div>
-                <div className="flex items-baseline space-x-2">
-                  <span className="text-gray-600 text-xs">Mulai dari</span>
-                  <motion.span
-                    className="text-2xl font-extrabold text-gray-900"
-                    animate={{
-                      scale: [1, 1.05, 1],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                  >
-                    {currentPromo.discountPrice}
-                  </motion.span>
-                  <span className="text-gray-600 text-xs">
-                    {currentPromo.unit}
-                  </span>
+                <div className="text-xl font-extrabold text-gray-900 leading-none">
+                  {formatPrice(promo.price)}
                 </div>
-              </motion.div>
+              </div>
+            </div>
 
-              {/* Features */}
-              <motion.div
-                className="mb-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                <h5 className="text-gray-700 font-semibold text-sm uppercase mb-2">
-                  Yang Anda Dapatkan:
-                </h5>
-                <motion.ul
-                  className="space-y-2 ml-3 text-gray-600 text-sm"
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  {currentPromo.features.map((feature, i) => (
-                    <motion.li
-                      key={i}
-                      className="flex items-start space-x-2"
-                      variants={fadeInUp}
-                      whileHover={{ x: 5 }}
-                    >
-                      <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-1" />
-                      <span>{feature}</span>
-                    </motion.li>
-                  ))}
-                </motion.ul>
-              </motion.div>
+            {/* Fitur */}
+            <ul className="space-y-1 text-xs text-gray-600 mb-2">
+              {promo.features && promo.features.length ? (
+                promo.features.map((f, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <Check className="w-3 h-3 text-green-500 flex-shrink-0 mt-1" />
+                    <span>{f}</span>
+                  </li>
+                ))
+              ) : (
+                <li className="text-xs text-gray-400">No features listed</li>
+              )}
+            </ul>
 
-              {/* Suitable */}
-              <motion.div
-                className="mb-6"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                <span className="inline-block bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">
-                  {currentPromo.suitable}
-                </span>
-              </motion.div>
-
-              {/* CTA Button */}
-              <motion.button
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg shadow relative z-10 flex items-center justify-center space-x-2"
-                whileHover={{
-                  scale: 1.02,
-                  boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+            {/* CTA */}
+            <div className="flex items-center justify-between gap-3">
+              <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                {promo.suitable}
+              </span>
+              <button
+                onClick={() => {
+                  const text = `Halo, saya mau tanya tentang ${promo.title}`;
+                  // redirectToWhatsApp helper Anda; fallback langsung ke wa.me
+                  const waUrl = `https://wa.me/?text=${encodeURIComponent(
+                    text
+                  )}`;
+                  window.open(waUrl, "_blank");
                 }}
-                onClick={() =>
-                  redirectToWhatsApp("Halo, saya mau tanya tentang produk")
-                }
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                delay={0.7}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-md text-sm"
               >
-                <MessageCircle className="w-5 h-5" />
-                <span className="text-sm">WhatsApp Sekarang</span>
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Nav Buttons */}
-        {/* <motion.button
-          onClick={prevSlide}
-          className="absolute -left-4 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow-sm z-50"
-          whileHover={{ scale: 1.1, x: -2 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
-        </motion.button>
-        <motion.button
-          onClick={nextSlide}
-          className="absolute -right-4 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 p-2 rounded-full shadow-sm z-50"
-          whileHover={{ scale: 1.1, x: 2 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <ChevronRight className="w-5 h-5 text-gray-600" />
-        </motion.button> */}
-      </div>
-
-      {/* Dots */}
-      <div className="flex justify-center space-x-2 mt-6">
-        {promoData.map((_, idx) => (
-          <motion.button
-            key={idx}
-            onClick={() => setCurrentSlide(idx)}
-            className={`w-4 h-4 rounded-full transition-colors duration-200 ${
-              idx === currentSlide ? "bg-green-600" : "bg-gray-300"
-            }`}
-            whileHover={{ scale: 1.2 }}
-            whileTap={{ scale: 0.8 }}
-            animate={{
-              scale: idx === currentSlide ? 1.1 : 1,
-            }}
-            transition={{ duration: 0.3 }}
-          />
-        ))}
-      </div>
+                <MessageCircle className="w-4 h-4" />
+                <span>WhatsApp</span>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </motion.div>
   );
 };
@@ -514,7 +422,7 @@ const Hero = () => {
               </motion.h1>
             </motion.div>
 
-            {/* Subtitle */}
+            {/* description */}
             <motion.div
               className="space-y-4"
               variants={staggerContainer}

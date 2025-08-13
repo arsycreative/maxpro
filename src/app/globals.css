@@ -420,3 +420,12 @@ body {
     box-shadow: none !important;
   }
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+
+.no-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
