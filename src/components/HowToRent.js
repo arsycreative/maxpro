@@ -140,7 +140,7 @@ export default function HowToRent() {
   ];
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-white">
       <div className="max-w-6xl mx-auto px-6">
         {/* Header */}
         <motion.div
