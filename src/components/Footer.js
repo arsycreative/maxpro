@@ -22,7 +22,7 @@ export default function Footer() {
   const serviceAreas = [
     {
       name: "Yogyakarta",
-      url: "https://www.google.com/maps/place/Maxpro+Kalasan+%7C+Sewa+Proyektor/@-7.7842302,110.4409965,17z/data=!3m1!4b1!4m6!3m5!1s0x2e7a5b6e6979f43d:0x959d11077e6ffbe5!8m2!3d-7.7842302!4d110.4409965!16s%2Fg%2F11ks48_1gw",
+      url: "https://www.google.com/maps/place/MAXPRO+Sewa+Proyektor+Gejayan,+Jl.+Flamboyan,+Karang+Gayam,+Caturtunggal,+Kec.+Depok,+Kabupaten+Sleman,+Daerah+Istimewa+Yogyakarta+55281/data=!4m2!3m1!1s0x2e7a57fe9442107b:0x490cd0634dd82cd1?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjEyNi4xMTAYACCs3wEqWiw5NDIyMzI5OSw5NDIxNjQxMyw5NDIxMjQ5Niw5NDIwNzUwNiw5NDIwODUwNiw5NDIxNzUyMyw5NDIxODY1Myw0NzA4NzExOCw0NzA4NDM5Myw5NDIxMzIwMEICSUQ%3D",
     },
     {
       name: "Bantul",
@@ -39,10 +39,6 @@ export default function Footer() {
     {
       name: "Sleman",
       url: "https://www.google.com/maps/place/MAXPRO+CONCAT+%7C+Sewa+Proyektor+cabang+Condongcatur+Sleman/@-7.738307,110.399197,17z/data=!3m1!4b1!4m6!3m5!1s0x2e7a5978b74d1bb1:0x2a39158105c808d2!8m2!3d-7.738307!4d110.399197!16s%2Fg%2F11v3rnzr1d",
-    },
-    {
-      name: "Gejayan",
-      url: "https://www.google.com/maps/place/MAXPRO+Sewa+Proyektor+Gejayan,+Jl.+Flamboyan,+Karang+Gayam,+Caturtunggal,+Kec.+Depok,+Kabupaten+Sleman,+Daerah+Istimewa+Yogyakarta+55281/data=!4m2!3m1!1s0x2e7a57fe9442107b:0x490cd0634dd82cd1?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjEyNi4xMTAYACCs3wEqWiw5NDIyMzI5OSw5NDIxNjQxMyw5NDIxMjQ5Niw5NDIwNzUwNiw5NDIwODUwNiw5NDIxNzUyMyw5NDIxODY1Myw0NzA4NzExOCw0NzA4NDM5Myw5NDIxMzIwMEICSUQ%3D",
     },
   ];
 
