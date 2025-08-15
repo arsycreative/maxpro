@@ -1,6 +1,5 @@
-// src/app/catalog/[id]/page.js
 "use client";
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Star,
@@ -16,15 +15,27 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import Image from "next/image";
 
 export default function CatalogDetailPage({ params }) {
   // Unwrap params using React.use()
-  const unwrappedParams = use(params);
+  const unwrappedParams = React.use(params);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(true);
   const router = useRouter();
+
+  // POPOVER state & refs
+  // openFrom: null | "main" | "final"
+  const [openFrom, setOpenFrom] = useState(null);
+  const [popoverPos, setPopoverPos] = useState({
+    top: 0,
+    left: 0,
+    placeAbove: false,
+  });
+  const mainBtnRef = useRef(null);
+  const finalBtnRef = useRef(null);
 
   // Fetch product detail by ID
   useEffect(() => {
@@ -32,16 +43,13 @@ export default function CatalogDetailPage({ params }) {
       setLoading(true);
 
       try {
-        // First, try to get from localStorage (for navigation from catalog)
         const storedProduct = localStorage.getItem("selectedProduct");
 
         if (storedProduct) {
-          // If we have stored product, use it immediately for better UX
           const currentProduct = JSON.parse(storedProduct);
           setProduct(currentProduct);
           setLoading(false);
 
-          // But also fetch fresh data in background to ensure accuracy
           const { data, error } = await supabase
             .from("products")
             .select("*")
@@ -50,11 +58,9 @@ export default function CatalogDetailPage({ params }) {
 
           if (!error && data) {
             setProduct(data);
-            // Update localStorage with fresh data
             localStorage.setItem("selectedProduct", JSON.stringify(data));
           }
         } else {
-          // If no stored product (direct URL access), fetch from Supabase
           const { data, error } = await supabase
             .from("products")
             .select("*")
@@ -63,7 +69,6 @@ export default function CatalogDetailPage({ params }) {
 
           if (error) {
             console.error("Error fetching product:", error);
-            // Redirect to catalog if product not found
             router.push("/catalog");
             return;
           }
@@ -81,10 +86,10 @@ export default function CatalogDetailPage({ params }) {
       }
     };
 
-    if (unwrappedParams.id) {
+    if (unwrappedParams?.id) {
       fetchProductDetail();
     }
-  }, [unwrappedParams.id, router]);
+  }, [unwrappedParams?.id, router]);
 
   // Fetch related products
   useEffect(() => {
@@ -119,10 +124,8 @@ export default function CatalogDetailPage({ params }) {
   }, [product]);
 
   const handleRelatedProductClick = (relatedProduct) => {
-    // Store new product data and navigate
     localStorage.setItem("selectedProduct", JSON.stringify(relatedProduct));
     router.push(`/catalog/${relatedProduct.id}`);
-    // Scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -182,11 +185,103 @@ export default function CatalogDetailPage({ params }) {
     </div>
   );
 
-  if (loading) {
-    return <DetailSkeleton />;
+  // POPOVER helpers
+  function computePopoverPosition(rect, popWidth = 240, popHeight = 92) {
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const placeAbove = spaceAbove > popHeight + 12 && spaceAbove > spaceBelow;
+    let top = placeAbove ? rect.top - popHeight - 8 : rect.bottom + 8;
+
+    let left = rect.right - popWidth;
+    const minLeft = 8;
+    const maxLeft = window.innerWidth - popWidth - 8;
+    if (left < minLeft) left = minLeft;
+    if (left > maxLeft) left = maxLeft;
+
+    return { top, left, placeAbove };
   }
 
-  if (!product) {
+  const openPopover = (which) => {
+    const btn = which === "main" ? mainBtnRef.current : finalBtnRef.current;
+    if (!btn) {
+      setPopoverPos({
+        top: Math.max(80, window.innerHeight / 2 - 46),
+        left: Math.max(8, window.innerWidth / 2 - 120),
+        placeAbove: false,
+      });
+    } else {
+      const rect = btn.getBoundingClientRect();
+      setPopoverPos(computePopoverPosition(rect));
+    }
+    setOpenFrom(which);
+  };
+
+  const closePopover = () => setOpenFrom(null);
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!openFrom) return;
+      const pop = document.getElementById("catalog-popover");
+      if (pop && pop.contains(e.target)) return;
+      const origin =
+        openFrom === "main" ? mainBtnRef.current : finalBtnRef.current;
+      if (origin && origin.contains(e.target)) return;
+      setOpenFrom(null);
+    }
+    function onKey(e) {
+      if (e.key === "Escape") setOpenFrom(null);
+    }
+
+    if (openFrom) {
+      document.addEventListener("mousedown", onDocClick);
+      document.addEventListener("keyup", onKey);
+    }
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keyup", onKey);
+    };
+  }, [openFrom]);
+
+  useEffect(() => {
+    if (!openFrom) return;
+    function recompute() {
+      const btn =
+        openFrom === "main" ? mainBtnRef.current : finalBtnRef.current;
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
+      setPopoverPos(computePopoverPosition(rect));
+    }
+    recompute();
+    window.addEventListener("resize", recompute);
+    window.addEventListener("scroll", recompute, true);
+    return () => {
+      window.removeEventListener("resize", recompute);
+      window.removeEventListener("scroll", recompute, true);
+    };
+  }, [openFrom]);
+
+  const openWhatsApp = (context = "tanya produk") => {
+    const phone = "6285712165658";
+    const text =
+      openFrom === "final"
+        ? `Halo MAXPRO! Saya ingin menyewa ${product?.title} dengan harga ${product?.price}/hari. Mohon konfirmasi ketersediaan dan detail pembayaran.`
+        : `Halo MAXPRO! Saya tertarik dengan ${product?.title}. Mohon info lebih lanjut untuk sewa produk ini.`;
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    closePopover();
+  };
+
+  const openPortal = () => {
+    window.open(
+      "https://whatsform.com/10Gv8D",
+      "_blank",
+      "noopener,noreferrer"
+    );
+    closePopover();
+  };
+
+  if (loading) return <DetailSkeleton />;
+  if (!product)
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -200,7 +295,6 @@ export default function CatalogDetailPage({ params }) {
         </div>
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
@@ -237,10 +331,11 @@ export default function CatalogDetailPage({ params }) {
               <motion.div variants={fadeInUp} className="lg:sticky lg:top-8">
                 <div className="relative bg-white rounded-3xl overflow-hidden shadow-2xl">
                   <div className="aspect-square relative">
-                    <img
+                    <Image
                       src={product.image}
                       alt={product.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   </div>
                 </div>
@@ -309,9 +404,7 @@ export default function CatalogDetailPage({ params }) {
                                 ""
                               )
                             ) || 0;
-
                           if (!price || !originalPrice) return 0;
-
                           return Math.round((1 - price / originalPrice) * 100);
                         })()}
                         %
@@ -424,19 +517,16 @@ export default function CatalogDetailPage({ params }) {
 
                 {/* CTA Button */}
                 <div className="pt-4 lg:pt-6">
-                  <motion.a
-                    href={`https://wa.me/6285712165658?text=Halo MAXPRO! Saya tertarik dengan ${product.title}. Mohon info lebih lanjut untuk sewa produk ini.`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <motion.button
+                    ref={mainBtnRef}
+                    onClick={() => openPopover("main")}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="w-full group bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold py-3 lg:py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center space-x-3"
                   >
                     <MessageCircle className="w-5 h-5 lg:w-6 lg:h-6" />
-                    <span className="text-base lg:text-lg">
-                      Sewa Sekarang via WhatsApp
-                    </span>
-                  </motion.a>
+                    <span className="text-base lg:text-lg">Sewa Sekarang</span>
+                  </motion.button>
                 </div>
               </motion.div>
             </motion.div>
@@ -558,11 +648,12 @@ export default function CatalogDetailPage({ params }) {
                     >
                       {/* Image */}
                       <div className="relative h-48 lg:h-56 overflow-hidden">
-                        <img
+                        <Image
                           src={item.image}
                           alt={item.title}
+                          fill
                           className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
-                          loading="lazy"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                         {/* View Details Overlay */}
@@ -577,7 +668,6 @@ export default function CatalogDetailPage({ params }) {
 
                       {/* Content */}
                       <div className="p-4 lg:p-6">
-                        {/* Badge */}
                         {item.badge && (
                           <div className="flex justify-start mb-3">
                             <div className="bg-red-50 border border-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-semibold">
@@ -586,7 +676,6 @@ export default function CatalogDetailPage({ params }) {
                           </div>
                         )}
 
-                        {/* Title & Rating */}
                         <div className="mb-4">
                           <h3 className="text-base lg:text-lg font-bold text-gray-900 mb-2 line-clamp-2">
                             {item.title}
@@ -610,7 +699,6 @@ export default function CatalogDetailPage({ params }) {
                           </div>
                         </div>
 
-                        {/* Pricing */}
                         <div className="mb-4">
                           {item.originalPrice && (
                             <div className="flex items-center space-x-2 mb-1">
@@ -634,9 +722,7 @@ export default function CatalogDetailPage({ params }) {
                                         ""
                                       )
                                     ) || 0;
-
                                   if (!original || original <= price) return 0;
-
                                   return Math.round(
                                     (1 - price / original) * 100
                                   );
@@ -650,7 +736,6 @@ export default function CatalogDetailPage({ params }) {
                           </div>
                         </div>
 
-                        {/* Description */}
                         <p className="text-gray-600 text-xs lg:text-sm line-clamp-3 leading-relaxed">
                           {item.description}
                         </p>
@@ -660,7 +745,6 @@ export default function CatalogDetailPage({ params }) {
                 </motion.div>
               )}
 
-              {/* View All Products Button */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -698,20 +782,77 @@ export default function CatalogDetailPage({ params }) {
               Dapatkan harga terbaik dan kelengkapan lengkap. Tim MAXPRO siap
               membantu event Anda sukses!
             </p>
-            <motion.a
-              href={`https://wa.me/6285712165658?text=Halo MAXPRO! Saya ingin menyewa ${product.title} dengan harga ${product.price}/hari. Mohon konfirmasi ketersediaan dan detail pembayaran.`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <motion.button
+              ref={finalBtnRef}
+              onClick={() => openPopover("final")}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="inline-flex items-center space-x-3 bg-white text-red-500 font-bold px-6 lg:px-8 py-3 lg:py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 text-sm lg:text-base xl:text-lg"
             >
               <MessageCircle className="w-5 h-5 lg:w-6 lg:h-6" />
               <span>Pesan Sekarang</span>
-            </motion.a>
+            </motion.button>
           </motion.div>
         </div>
       </section>
+
+      {/* POPOVER - fixed */}
+      {openFrom && (
+        <motion.div
+          id="catalog-popover"
+          initial={{ opacity: 0, scale: 0.98, y: 6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.98, y: 6 }}
+          transition={{ duration: 0.12 }}
+          style={{
+            position: "fixed",
+            top: popoverPos.top,
+            left: popoverPos.left,
+            width: 240,
+            zIndex: 80,
+          }}
+          className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden"
+          role="menu"
+        >
+          <button
+            onClick={() => openWhatsApp()}
+            className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-gray-50"
+            role="menuitem"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" />
+            </svg>
+            <span className="text-sm text-gray-700">WhatsApp</span>
+          </button>
+
+          <button
+            onClick={() => openPortal()}
+            className="w-full text-left px-4 py-3 flex items-center gap-3 border-t border-gray-100 hover:bg-gray-50"
+            role="menuitem"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10 14L21 3m0 0v7m0-7h-7M3 21h18"
+              />
+            </svg>
+            <span className="text-sm text-gray-700">Portal Penyewaan</span>
+          </button>
+        </motion.div>
+      )}
     </div>
   );
 }

@@ -20,7 +20,7 @@ const AdvancedImageCarousel = () => {
     },
     {
       id: 2,
-      url: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
+      url: "https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       alt: "Projector Setup Premium",
       title: "Projector Setup",
       description: "Proyektor berkualitas tinggi untuk presentasi",
@@ -34,7 +34,7 @@ const AdvancedImageCarousel = () => {
     },
     {
       id: 4,
-      url: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
+      url: "https://images.unsplash.com/photo-1750516028146-379e8095001e?q=80&w=1335&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       alt: "Speaker System Advanced",
       title: "Speaker System",
       description: "System audio berkualitas studio",
@@ -55,7 +55,7 @@ const AdvancedImageCarousel = () => {
     },
     {
       id: 7,
-      url: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
+      url: "https://images.unsplash.com/photo-1727096857692-e9dadf2bc92e?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       alt: "Professional Lighting",
       title: "Lighting System",
       description: "Sistem pencahayaan profesional",

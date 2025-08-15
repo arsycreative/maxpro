@@ -1,23 +1,20 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import {
-  motion,
-  AnimatePresence,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll } from "framer-motion";
 import {
   ChevronDown,
   Play,
-  Star,
-  ChevronLeft,
-  ChevronRight,
   Check,
   MessageCircle,
+  ExternalLink,
+  X,
+  ZoomIn,
 } from "lucide-react";
 import { redirectToWhatsApp } from "@/app/utils/whatsapp";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 
 // Animation variants
 const fadeInUp = {
@@ -73,6 +70,42 @@ const slideVariants = {
   exit: { opacity: 0, x: -30, scale: 0.98 },
 };
 
+// Modal backdrop variants
+const backdropVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+  exit: { opacity: 0 },
+};
+
+// Modal content variants
+const modalVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.7,
+    y: 0,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      damping: 25,
+      stiffness: 400,
+      duration: 0.4,
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.7,
+    y: 0,
+    transition: {
+      duration: 0.25,
+      ease: "easeOut",
+    },
+  },
+};
+
 const formatPrice = (val) => {
   // jika mendapat angka -> tambahkan "k"
   if (typeof val === "number") return `${val}k`;
@@ -88,10 +121,19 @@ const formatPrice = (val) => {
 };
 
 // PromoCards (Next Image + proporsional)
-const PromoCards = () => {
+function PromoCards() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [promoData, setPromoData] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // id dari kartu yang sedang membuka popover kontak (null = tidak ada)
+  const [openContactForId, setOpenContactForId] = useState(null);
+  const contactRef = useRef(null);
+
+  // image preview state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState(null);
+  const [previewAlt, setPreviewAlt] = useState("");
 
   // ambil data dari Supabase pada mount
   useEffect(() => {
@@ -100,7 +142,6 @@ const PromoCards = () => {
     async function fetchPromos() {
       setLoading(true);
       try {
-        // ambil semua kolom relevan. adjust select() kalau butuh kolom lain.
         const { data, error } = await supabase
           .from("products")
           .select("*")
@@ -108,24 +149,19 @@ const PromoCards = () => {
           .order("id", { ascending: true });
 
         if (error) throw error;
-
         if (!isMounted) return;
 
-        // normalisasi data agar kompatibel dengan UI
         const normalized = (data || []).map((p) => ({
           id: p.id,
           title: p.title,
           description: p.description,
-          // prefer integer field originalPrice, fallback to originalprice (string)
           originalprice:
             p.originalPrice ?? p.originalprice ?? p.originalPriceInt ?? null,
-          // prefer integer 'price_int' or parse 'price' string; fallback to p.price
           price:
             p.price_int ??
             (() => {
               if (p.price == null) return null;
               if (typeof p.price === "number") return p.price;
-              // if string like '350k' or '350' -> extract digits
               const digits = ("" + p.price).replace(/[^\d]/g, "");
               return digits ? parseInt(digits, 10) : p.price;
             })(),
@@ -136,7 +172,7 @@ const PromoCards = () => {
             : [],
           suitable: p.suitable ?? p.suitable_for ?? null,
           image: p.image ?? null,
-          raw: p, // simpan raw jika perlu debugging
+          raw: p,
         }));
 
         setPromoData(normalized);
@@ -149,13 +185,17 @@ const PromoCards = () => {
     }
 
     fetchPromos();
-
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // auto slide (hanya aktif jika ada data)
+  const [domReady, setDomReady] = useState(false);
+  useEffect(() => {
+    setDomReady(true);
+  }, []);
+
+  // auto slide
   useEffect(() => {
     if (!promoData || promoData.length === 0) return;
     const t = setInterval(
@@ -164,6 +204,54 @@ const PromoCards = () => {
     );
     return () => clearInterval(t);
   }, [promoData.length]);
+
+  // klik di luar popover -> tutup
+  useEffect(() => {
+    function handleDocClick(e) {
+      if (!contactRef.current) return;
+      if (!contactRef.current.contains(e.target)) {
+        setOpenContactForId(null);
+      }
+    }
+    if (openContactForId !== null) {
+      document.addEventListener("mousedown", handleDocClick);
+    }
+    return () => document.removeEventListener("mousedown", handleDocClick);
+  }, [openContactForId]);
+
+  // keyboard handler untuk preview (Esc)
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === "Escape") {
+        if (previewOpen) setPreviewOpen(false);
+        if (openContactForId !== null) setOpenContactForId(null);
+      }
+    }
+    if (previewOpen || openContactForId !== null) {
+      document.addEventListener("keyup", onKey);
+    }
+    return () => document.removeEventListener("keyup", onKey);
+  }, [previewOpen, openContactForId]);
+
+  // lock scroll saat preview terbuka
+  useEffect(() => {
+    if (previewOpen) {
+      const prevOverflow = document.body.style.overflow;
+      const prevPaddingRight = document.body.style.paddingRight;
+
+      // Calculate scrollbar width to prevent layout shift
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+
+      document.body.style.overflow = "hidden";
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+
+      return () => {
+        document.body.style.overflow = prevOverflow;
+        document.body.style.paddingRight = prevPaddingRight;
+      };
+    }
+  }, [previewOpen]);
 
   if (loading) {
     return (
@@ -187,108 +275,266 @@ const PromoCards = () => {
 
   const promo = promoData[currentSlide];
 
+  // buka wa dengan pesan (buka di tab baru)
+  const openWhatsApp = (message) => {
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+    setOpenContactForId(null);
+  };
+
+  // buka portal penyewaan
+  const openPortal = (portalUrl = "https://whatsform.com/10Gv8D") => {
+    window.open(portalUrl, "_blank", "noopener,noreferrer");
+    setOpenContactForId(null);
+  };
+
+  // buka preview gambar (hanya gambar)
+  const openImagePreview = (src, alt = "") => {
+    if (!src) return;
+    setPreviewSrc(src);
+    setPreviewAlt(alt);
+    setPreviewOpen(true);
+  };
+
+  // tutup preview
+  const closeImagePreview = () => {
+    setPreviewOpen(false);
+    // Delay clearing src to allow exit animation
+    setTimeout(() => {
+      setPreviewSrc(null);
+      setPreviewAlt("");
+    }, 200);
+  };
+
   return (
-    <motion.div className="relative w-full max-w-md mx-auto bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={promo.id}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.38, ease: "easeOut" }}
-          className="flex flex-col gap-3"
-        >
-          {/* Gambar */}
-          <div className="relative rounded-md overflow-hidden w-full aspect-square max-h-60">
-            {promo.image ? (
-              <Image
-                src={promo.image}
-                alt={promo.title}
-                fill
-                sizes="(max-width: 768px) 90vw, 320px"
-                className="object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
-                No image
-              </div>
-            )}
-            <div className="absolute top-2 right-2 bg-gradient-to-r from-red-600 to-red-500 text-white px-2 py-0.5 rounded-full text-[11px] font-semibold">
-              PROMO
-            </div>
-          </div>
-
-          {/* Konten */}
-          <div>
-            <h3 className="text-base font-semibold text-gray-800 mb-0.5">
-              {promo.title}
-            </h3>
-            <p className="text-xs text-gray-500 mb-2">{promo.description}</p>
-
-            {/* Harga */}
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <div className="text-[11px] text-gray-400 line-through">
-                  {formatPrice(promo.originalprice)}
-                </div>
-                <div className="text-xl font-extrabold text-gray-900 leading-none">
-                  {formatPrice(promo.price)}
-                </div>
-              </div>
-            </div>
-
-            {/* Fitur */}
-            <ul className="space-y-1 text-xs text-gray-600 mb-2">
-              {promo.features && promo.features.length ? (
-                promo.features.map((f, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <Check className="w-3 h-3 text-green-500 flex-shrink-0 mt-1" />
-                    <span>{f}</span>
-                  </li>
-                ))
-              ) : (
-                <li className="text-xs text-gray-400">No features listed</li>
-              )}
-            </ul>
-
-            {/* CTA */}
-            <div className="flex items-center justify-between gap-3">
-              <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                {promo.suitable}
-              </span>
-              <button
-                onClick={() => {
-                  const text = `Halo, saya mau tanya tentang ${promo.title}`;
-                  // redirectToWhatsApp helper Anda; fallback langsung ke wa.me
-                  const waUrl = `https://wa.me/?text=${encodeURIComponent(
-                    text
-                  )}`;
-                  window.open(waUrl, "_blank");
-                }}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-md text-sm"
+    <>
+      <motion.div className="relative w-full max-w-md mx-auto bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={promo.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.38, ease: "easeOut" }}
+            className="flex flex-col gap-3"
+          >
+            {/* Gambar dengan hover effect dan zoom indicator */}
+            <div className="relative rounded-md overflow-hidden w-full aspect-square max-h-80 group cursor-zoom-in">
+              <div
+                className="relative w-full h-full"
+                onClick={() => openImagePreview(promo.image, promo.title)}
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>WhatsApp</span>
-              </button>
+                {promo.image ? (
+                  <>
+                    <Image
+                      src={promo.image}
+                      alt={promo.title}
+                      fill
+                      sizes="(max-width: 768px) 90vw, 320px"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    {/* Overlay untuk hover effect */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        whileHover={{ opacity: 1, scale: 1 }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      >
+                        <div className="bg-white/90 backdrop-blur-sm rounded-full p-3">
+                          <ZoomIn className="w-6 h-6 text-gray-800" />
+                        </div>
+                      </motion.div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                    No image
+                  </div>
+                )}
+              </div>
+
+              <div className="absolute top-2 right-2 bg-gradient-to-r from-red-600 to-red-500 text-white px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                PROMO
+              </div>
             </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
-    </motion.div>
+
+            {/* Konten */}
+            <div>
+              <h3 className="text-base font-semibold text-gray-800 mb-0.5">
+                {promo.title}
+              </h3>
+              <p className="text-xs text-gray-500 mb-2">{promo.description}</p>
+
+              {/* Harga */}
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <div className="text-[11px] text-gray-400 line-through">
+                    {formatPrice(promo.originalprice)}
+                  </div>
+                  <div className="text-xl font-extrabold text-gray-900 leading-none">
+                    {formatPrice(promo.price)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Fitur */}
+              <ul className="space-y-1 text-xs text-gray-600 mb-2">
+                {promo.features && promo.features.length ? (
+                  promo.features.map((f, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <Check className="w-3 h-3 text-green-500 flex-shrink-0 mt-1" />
+                      <span>{f}</span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-xs text-gray-400">No features listed</li>
+                )}
+              </ul>
+
+              {/* CTA */}
+              <div className="flex items-center justify-between gap-3 relative">
+                <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
+                  {promo.suitable}
+                </span>
+
+                {/* Wrapper CTA (relative agar popover absoluted di dalamnya) */}
+                <div className="relative" ref={contactRef}>
+                  <button
+                    onClick={() =>
+                      setOpenContactForId((prev) =>
+                        prev === promo.id ? null : promo.id
+                      )
+                    }
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-md text-sm transition-colors duration-200"
+                    aria-haspopup="menu"
+                    aria-expanded={openContactForId === promo.id}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Hubungi</span>
+                  </button>
+
+                  {/* Popover opsi */}
+                  <AnimatePresence>
+                    {openContactForId === promo.id && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute right-0 mt-2 w-48 text-black bg-white rounded-lg shadow-lg border border-gray-100 z-20"
+                        role="menu"
+                      >
+                        <button
+                          onClick={() =>
+                            openWhatsApp(
+                              `Halo, saya mau tanya tentang ${promo.title}`
+                            )
+                          }
+                          className="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-gray-50 transition-colors duration-150"
+                          role="menuitem"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          <span className="text-sm">WhatsApp</span>
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            openPortal("https://whatsform.com/10Gv8D")
+                          }
+                          className="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-gray-50 border-t border-gray-100 transition-colors duration-150"
+                          role="menuitem"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          <span className="text-sm">Portal Penyewaan</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
+
+      {/* FIXED IMAGE PREVIEW MODAL */}
+      {domReady &&
+        createPortal(
+          <AnimatePresence>
+            {previewOpen && previewSrc && (
+              <motion.div
+                key="promo-image-preview"
+                className="fixed inset-0 z-[999999] flex items-center justify-center p-4 pt-20 sm:pt-24 pb-8"
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={backdropVariants}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Backdrop */}
+                <motion.div
+                  className="absolute inset-0 bg-black/90"
+                  onClick={closeImagePreview}
+                />
+
+                {/* Modal Content */}
+                <motion.div
+                  className="relative z-10 w-full max-w-4xl h-auto max-h-[calc(100vh-160px)] mx-auto"
+                  variants={modalVariants}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Close Button */}
+                  <motion.button
+                    onClick={closeImagePreview}
+                    className="fixed top-4 right-4 z-[1000000] bg-white hover:bg-gray-100 rounded-full p-3 shadow-2xl transition-all duration-200"
+                    aria-label="Close image preview"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <X className="w-6 h-6 text-gray-800" />
+                  </motion.button>
+
+                  {/* Image Container */}
+                  <div className="relative w-full h-[60vh] sm:h-[70vh] md:h-[75vh] bg-black/30 backdrop-blur-sm rounded-lg overflow-hidden shadow-2xl">
+                    <Image
+                      src={previewSrc}
+                      alt={previewAlt}
+                      fill
+                      sizes="(max-width: 768px) 95vw, (max-width: 1200px) 85vw, 1000px"
+                      className="object-contain"
+                      priority
+                      quality={95}
+                    />
+
+                    {previewAlt && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4"
+                      >
+                        <p className="text-white font-semibold text-lg sm:text-xl drop-shadow-lg">
+                          {previewAlt}
+                        </p>
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
+    </>
   );
-};
+}
 
 // Main Hero Component
 const Hero = () => {
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 500], [0, -100]);
-  const opacity = useTransform(scrollY, [0, 300], [1, 0.5]);
+  const router = useRouter();
 
   const scrollToNext = () => {
-    window.scrollTo({
-      top: window.innerHeight,
-      behavior: "smooth",
-    });
+    router.push("/catalog");
   };
 
   return (
@@ -296,8 +542,6 @@ const Hero = () => {
       className="relative min-h-screen flex items-center translate-y-[-10px] justify-center overflow-hidden bg-cover bg-center"
       style={{
         backgroundImage: `url('/hero-background.webp')`,
-        // y,
-        // opacity,
       }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -549,7 +793,7 @@ const Hero = () => {
           </motion.div>
 
           {/* Right Content - Promo Cards */}
-          <div className="lg:pl-8">
+          <div className="lg:pl-8 lg:mb-0 mb-8">
             <PromoCards />
           </div>
         </div>

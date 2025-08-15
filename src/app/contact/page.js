@@ -1,15 +1,14 @@
+// src/app/contact/page.js
 "use client";
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   MessageCircle,
-  Mail,
   ExternalLink,
   Clock,
   MapPin,
   Phone,
-  Send,
   CheckCircle,
   Star,
 } from "lucide-react";
@@ -24,10 +23,6 @@ export default function ContactPage() {
       link: "https://wa.me/6285712165658",
       message:
         "Halo MAXPRO! Saya ingin konsultasi sewa multimedia untuk acara saya.",
-    },
-    email: {
-      address: "info@maxpro.id",
-      subject: "Konsultasi Sewa Multimedia",
     },
     rentalLink: {
       url: "https://whatsform.com/10Gv8D",
@@ -165,7 +160,7 @@ export default function ContactPage() {
               </p>
             </motion.div>
 
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-2 gap-8">
               {/* WhatsApp Card */}
               <motion.div
                 initial={{ opacity: 0, y: 50 }}
@@ -233,83 +228,11 @@ export default function ContactPage() {
                 </div>
               </motion.div>
 
-              {/* Email Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="bg-white rounded-3xl p-8 shadow-xl border-2 border-blue-100 hover:border-blue-300 transition-all duration-300 relative overflow-hidden group"
-              >
-                {/* Background Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <Mail className="w-8 h-8 text-white" />
-                  </div>
-
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                    Email
-                  </h3>
-                  <p className="text-gray-600 mb-6 leading-relaxed">
-                    Kirim detail kebutuhan acara Anda melalui email untuk
-                    penawaran lengkap
-                  </p>
-
-                  <div className="space-y-4 mb-8">
-                    <div
-                      onClick={() =>
-                        copyToClipboard(contactInfo.email.address, "email")
-                      }
-                      className="bg-gray-50 rounded-xl p-4 cursor-pointer hover:bg-gray-100 transition-colors duration-200 group/copy"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-semibold text-gray-800">
-                          {contactInfo.email.address}
-                        </span>
-                        {copiedText === "email" ? (
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                        ) : (
-                          <div className="w-5 h-5 border-2 border-gray-300 rounded group-hover/copy:border-blue-500 transition-colors duration-200"></div>
-                        )}
-                      </div>
-                      <span className="text-sm text-gray-500">
-                        Klik untuk copy email
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <motion.a
-                      href={`mailto:${
-                        contactInfo.email.address
-                      }?subject=${encodeURIComponent(
-                        contactInfo.email.subject
-                      )}`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-4 rounded-xl flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-300"
-                    >
-                      <Mail className="w-5 h-5" />
-                      <span>Kirim Email</span>
-                    </motion.a>
-
-                    <div className="text-center">
-                      <span className="text-sm text-gray-500">
-                        Response time: 2-4 jam kerja
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
               {/* Rental Link Card */}
               <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.3 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
                 viewport={{ once: true }}
                 whileHover={{ y: -5, scale: 1.02 }}
                 className="bg-white rounded-3xl p-8 shadow-xl border-2 border-purple-100 hover:border-purple-300 transition-all duration-300 relative overflow-hidden group"
@@ -469,17 +392,32 @@ export default function ContactPage() {
               dan dapatkan penawaran terbaik.
             </p>
 
-            <motion.a
-              href={contactInfo.whatsapp.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center space-x-3 bg-white text-red-500 font-bold px-8 py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300"
-            >
-              <MessageCircle className="w-6 h-6" />
-              <span className="text-lg">Mulai Konsultasi Gratis</span>
-            </motion.a>
+            {/* Dua tombol: utama = WhatsApp, sekunder = Portal Sewa */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <motion.a
+                href={contactInfo.whatsapp.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center space-x-3 bg-white text-red-500 font-bold px-8 py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300"
+              >
+                <MessageCircle className="w-6 h-6" />
+                <span className="text-lg">Mulai Konsultasi Gratis</span>
+              </motion.a>
+
+              <motion.a
+                href={contactInfo.rentalLink.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center space-x-3 border-2 border-white/30 text-white/95 px-6 py-3 rounded-2xl font-semibold hover:bg-white/10 transition-all duration-300"
+              >
+                <ExternalLink className="w-5 h-5" />
+                <span className="text-lg">Cek Portal Sewa</span>
+              </motion.a>
+            </div>
           </motion.div>
         </div>
       </section>

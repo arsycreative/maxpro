@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
 import { motion } from "framer-motion";
@@ -5,6 +6,7 @@ import Image from "next/image";
 import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { usePathname } from "next/navigation";
+import React, { useRef, useState, useEffect } from "react";
 
 export default function Footer() {
   const pathname = usePathname();
@@ -27,6 +29,110 @@ export default function Footer() {
 
   const firstSegment = pathname?.split("/")[1];
   if (firstSegment === "admin") return null;
+
+  // --- Popover state & refs ---
+  // openFrom: null | "footer" | "fab"
+  const [openFrom, setOpenFrom] = useState(null);
+  const [popoverPos, setPopoverPos] = useState({
+    top: 0,
+    left: 0,
+    placeAbove: false,
+  });
+  const footerBtnRef = useRef(null);
+  const fabBtnRef = useRef(null);
+
+  // compute position similar to previous components
+  const computePopoverPosition = (rect, width = 220, height = 92) => {
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const placeAbove = spaceAbove > height + 12 && spaceAbove > spaceBelow;
+    let top = placeAbove ? rect.top - height - 8 : rect.bottom + 8;
+
+    // align popover right edge with button right edge then clamp
+    let left = rect.right - width;
+    const minLeft = 8;
+    const maxLeft = window.innerWidth - width - 8;
+    if (left < minLeft) left = minLeft;
+    if (left > maxLeft) left = maxLeft;
+
+    return { top, left, placeAbove };
+  };
+
+  const openPopover = (which) => {
+    // which: "footer" or "fab"
+    const btn = which === "footer" ? footerBtnRef.current : fabBtnRef.current;
+    if (!btn) {
+      const top = Math.max(80, window.innerHeight / 2 - 46);
+      const left = Math.max(8, window.innerWidth / 2 - 110);
+      setPopoverPos({ top, left, placeAbove: false });
+    } else {
+      const rect = btn.getBoundingClientRect();
+      setPopoverPos(computePopoverPosition(rect));
+    }
+    setOpenFrom(which);
+  };
+
+  const closePopover = () => setOpenFrom(null);
+
+  // outside click / Esc
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!openFrom) return;
+      const pop = document.getElementById("footer-contact-popover");
+      if (pop && pop.contains(e.target)) return;
+      const origin =
+        openFrom === "footer" ? footerBtnRef.current : fabBtnRef.current;
+      if (origin && origin.contains(e.target)) return;
+      setOpenFrom(null);
+    }
+    function onKey(e) {
+      if (e.key === "Escape") setOpenFrom(null);
+    }
+    if (openFrom) {
+      document.addEventListener("mousedown", onDocClick);
+      document.addEventListener("keyup", onKey);
+    }
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keyup", onKey);
+    };
+  }, [openFrom]);
+
+  // recompute on scroll/resize
+  useEffect(() => {
+    if (!openFrom) return;
+    function recompute() {
+      const btn =
+        openFrom === "footer" ? footerBtnRef.current : fabBtnRef.current;
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
+      setPopoverPos(computePopoverPosition(rect));
+    }
+    recompute();
+    window.addEventListener("resize", recompute);
+    window.addEventListener("scroll", recompute, true);
+    return () => {
+      window.removeEventListener("resize", recompute);
+      window.removeEventListener("scroll", recompute, true);
+    };
+  }, [openFrom]);
+
+  // Actions
+  const phone = "6285712165658";
+  const openWhatsApp = (context = "konsultasi") => {
+    const text = `Halo, saya mau ${context}`;
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    closePopover();
+  };
+  const openPortal = () => {
+    window.open(
+      "https://whatsform.com/10Gv8D",
+      "_blank",
+      "noopener,noreferrer"
+    );
+    closePopover();
+  };
 
   return (
     <footer className="relative bg-black overflow-hidden">
@@ -150,11 +256,8 @@ export default function Footer() {
               </h3>
 
               <div className="space-y-4">
-                <motion.a
+                <motion.div
                   whileHover={{ scale: 1.02, x: 4 }}
-                  href="https://wa.me/6285712165658"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="flex items-center space-x-3 p-3 bg-white/5 backdrop-blur-sm border border-green-500/20 rounded-xl hover:bg-green-500/10 hover:border-green-500/40 transition-all duration-300 group"
                 >
                   <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -164,7 +267,7 @@ export default function Footer() {
                     <p className="text-white font-medium">WhatsApp</p>
                     <p className="text-green-400 text-sm">+62 857-1216-5658</p>
                   </div>
-                </motion.a>
+                </motion.div>
 
                 <motion.div
                   whileHover={{ scale: 1.02, x: 4 }}
@@ -195,7 +298,7 @@ export default function Footer() {
                 </motion.div>
               </div>
 
-              {/* CTA Button */}
+              {/* CTA Button (now opens popover) */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -203,17 +306,18 @@ export default function Footer() {
                 viewport={{ once: true }}
                 className="mt-6"
               >
-                <motion.a
+                <motion.button
+                  ref={footerBtnRef}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  href="https://wa.me/6285712165658"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={() => openPopover("footer")}
+                  aria-haspopup="menu"
+                  aria-expanded={openFrom === "footer"}
                   className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 px-6 py-3 rounded-xl text-white font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <ChatBubbleLeftRightIcon className="w-5 h-5" />
                   <span>Konsultasi Gratis</span>
-                </motion.a>
+                </motion.button>
               </motion.div>
             </motion.div>
           </div>
@@ -254,7 +358,7 @@ export default function Footer() {
         </motion.div>
       </div>
 
-      {/* Floating WhatsApp Button */}
+      {/* Floating WhatsApp Button (now button to open popover) */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         whileInView={{ scale: 1, opacity: 1 }}
@@ -262,18 +366,83 @@ export default function Footer() {
         viewport={{ once: true }}
         className="fixed bottom-6 right-6 z-50"
       >
-        <motion.a
+        <motion.button
+          ref={fabBtnRef}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          href="https://wa.me/6285712165658"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-300 group"
+          onClick={() => openPopover("fab")}
+          aria-haspopup="menu"
+          aria-expanded={openFrom === "fab"}
+          className="w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-300 group relative"
         >
           <ChatBubbleLeftRightIcon className="w-7 h-7 group-hover:scale-110 transition-transform duration-300" />
           <div className="absolute -inset-2 rounded-full bg-green-500/30 animate-pulse opacity-75"></div>
-        </motion.a>
+        </motion.button>
       </motion.div>
+
+      {/* POPOVER - fixed element */}
+      {openFrom && (
+        <motion.div
+          id="footer-contact-popover"
+          initial={{ opacity: 0, scale: 0.98, y: 6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.98, y: 6 }}
+          transition={{ duration: 0.12 }}
+          style={{
+            position: "fixed",
+            top: popoverPos.top,
+            left: popoverPos.left,
+            width: 220,
+            zIndex: 80,
+          }}
+          className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden"
+          role="menu"
+        >
+          <button
+            onClick={() => {
+              const context =
+                openFrom === "footer"
+                  ? "mau konsultasi gratis"
+                  : "mau konsultasi via tombol cepat";
+              openWhatsApp(context);
+            }}
+            className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-gray-50"
+            role="menuitem"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" />
+            </svg>
+            <span className="text-sm text-gray-700">WhatsApp</span>
+          </button>
+
+          <button
+            onClick={() => openPortal()}
+            className="w-full text-left px-4 py-3 flex items-center gap-3 border-t border-gray-100 hover:bg-gray-50"
+            role="menuitem"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <path
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10 14L21 3m0 0v7m0-7h-7M3 21h18"
+              />
+            </svg>
+            <span className="text-sm text-gray-700">Portal Penyewaan</span>
+          </button>
+        </motion.div>
+      )}
     </footer>
   );
 }

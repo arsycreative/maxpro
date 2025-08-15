@@ -11,6 +11,8 @@ const nextConfig = {
       "picsum.photos",
       "plus.unsplash.com",
       "images.pexels.com",
+      "images.squarespace-cdn.com",
+      "unsplash.com",
     ],
   },
 };
