@@ -20,11 +20,26 @@ export default function Footer() {
   ];
 
   const serviceAreas = [
-    "Yogyakarta",
-    "Bantul",
-    "Sleman",
-    "Gunung Kidul",
-    "Kulonprogo",
+    {
+      name: "Yogyakarta",
+      url: "https://www.google.com/maps/place/Maxpro+Kalasan+%7C+Sewa+Proyektor/@-7.7842302,110.4409965,17z/data=!3m1!4b1!4m6!3m5!1s0x2e7a5b6e6979f43d:0x959d11077e6ffbe5!8m2!3d-7.7842302!4d110.4409965!16s%2Fg%2F11ks48_1gw",
+    },
+    {
+      name: "Bantul",
+      url: "https://www.google.com/maps/place/MAXPRO+Sewa+Proyektor+Fastfold+Speaker+Screen+Layar+Lebar+Shooting+Live+Streaming+Pengajian/@-7.8648241,110.3492521,17z/data=!3m1!4b1!4m6!3m5!1s0x2e7a578c7c8123eb:0x2c96a7032c23e492!8m2!3d-7.8648241!4d110.3492521!16s%2Fg%2F11sf34hsrv",
+    },
+    {
+      name: "Gunung Kidul",
+      url: "https://www.google.com/maps/place/MAXPRO+Sewa+Proyektor+Fastfold+Speaker+Screen+Layar+Lebar+Shooting+Live+Streaming+Pengajian/@-7.8648241,110.3492521,17z/data=!3m1!4b1!4m6!3m5!1s0x2e7a578c7c8123eb:0x2c96a7032c23e492!8m2!3d-7.8648241!4d110.3492521!16s%2Fg%2F11sf34hsrv",
+    },
+    {
+      name: "Kulonprogo",
+      url: "https://www.google.com/maps/place/MAXPRO+Sewa+Proyektor+Fastfold+Speaker+Screen+Layar+Lebar+Shooting+Live+Streaming+Pengajian/@-7.8648241,110.3492521,17z/data=!3m1!4b1!4m6!3m5!1s0x2e7a578c7c8123eb:0x2c96a7032c23e492!8m2!3d-7.8648241!4d110.3492521!16s%2Fg%2F11sf34hsrv",
+    },
+    {
+      name: "Sleman",
+      url: "https://www.google.com/maps/place/MAXPRO+CONCAT+%7C+Sewa+Proyektor+cabang+Condongcatur+Sleman/@-7.738307,110.399197,17z/data=!3m1!4b1!4m6!3m5!1s0x2e7a5978b74d1bb1:0x2a39158105c808d2!8m2!3d-7.738307!4d110.399197!16s%2Fg%2F11v3rnzr1d",
+    },
   ];
 
   const firstSegment = pathname?.split("/")[1];
@@ -232,10 +247,15 @@ export default function Footer() {
                     whileHover={{ x: 4 }}
                     className="group"
                   >
-                    <div className="text-gray-400 hover:text-blue-400 transition-colors duration-300 flex items-center space-x-2">
+                    <a
+                      href={area.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-blue-400 transition-colors duration-300 flex items-center space-x-2"
+                    >
                       <MapPin className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
-                      <span>{area}</span>
-                    </div>
+                      <span>{area.name}</span>
+                    </a>
                   </motion.li>
                 ))}
               </ul>
