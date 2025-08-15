@@ -89,7 +89,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-red-900 flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-red-900 flex items-center justify-center relative">
       {/* Background Pattern */}
       <div
         className="absolute inset-0 opacity-50"

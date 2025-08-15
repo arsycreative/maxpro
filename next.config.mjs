@@ -10,6 +10,7 @@ const nextConfig = {
       "arulvlessswrhborignf.supabase.co",
       "picsum.photos",
       "plus.unsplash.com",
+      "images.pexels.com",
     ],
   },
 };
