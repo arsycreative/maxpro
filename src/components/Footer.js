@@ -352,6 +352,79 @@ export default function Footer() {
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span>Online 24/7</span>
                 </motion.div>
+
+                {/* Social media links */}
+                <div className="flex items-center space-x-3">
+                  <a
+                    href="https://www.youtube.com/@maxprosewaproyektor"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="YouTube - Maxpro"
+                    className="p-2 rounded-md hover:bg-white/5 transition-colors duration-200 text-gray-300 hover:text-white"
+                  >
+                    {/* YouTube SVG */}
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden
+                    >
+                      <path d="M23.498 6.186a2.997 2.997 0 0 0-2.108-2.118C19.6 3.5 12 3.5 12 3.5s-7.6 0-9.39.568A2.997 2.997 0 0 0 .502 6.186C0 8.03 0 12 0 12s0 3.97.502 5.814a2.997 2.997 0 0 0 2.108 2.118C4.4 20.5 12 20.5 12 20.5s7.6 0 9.39-.568a2.997 2.997 0 0 0 2.108-2.118C24 15.97 24 12 24 12s0-3.97-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                  </a>
+
+                  <a
+                    href="https://www.instagram.com/maxpro.jogja"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Instagram - Maxpro"
+                    className="p-2 rounded-md hover:bg-white/5 transition-colors duration-200 text-gray-300 hover:text-white"
+                  >
+                    {/* Instagram SVG */}
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <rect
+                        x="3"
+                        y="3"
+                        width="18"
+                        height="18"
+                        rx="5"
+                        ry="5"
+                      ></rect>
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                      <line x1="17.5" y1="6.5" x2="17.5" y2="6.5"></line>
+                    </svg>
+                  </a>
+
+                  <a
+                    href="https://www.facebook.com/muvonproject"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Facebook - Muvon Project"
+                    className="p-2 rounded-md hover:bg-white/5 transition-colors duration-200 text-gray-300 hover:text-white"
+                  >
+                    {/* Facebook SVG (clear 'f' logo) */}
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden
+                    >
+                      <path d="M22 12.064C22 6.48 17.523 2 12 2S2 6.48 2 12.064C2 17.086 5.656 21.128 10.438 21.954v-6.96H7.898v-2.93h2.54V9.845c0-2.507 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.444 2.93h-2.33v6.96C18.344 21.128 22 17.086 22 12.064z" />
+                    </svg>
+                  </a>
+                </div>
               </div>
             </div>
           </div>
