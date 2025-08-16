@@ -444,6 +444,20 @@ export default function Footer() {
                       <path d="M22 12.064C22 6.48 17.523 2 12 2S2 6.48 2 12.064C2 17.086 5.656 21.128 10.438 21.954v-6.96H7.898v-2.93h2.54V9.845c0-2.507 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562v1.875h2.773l-.444 2.93h-2.33v6.96C18.344 21.128 22 17.086 22 12.064z" />
                     </svg>
                   </a>
+
+                  <a
+                    href="https://www.tiktok.com/@maxpro.jogja"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Image
+                      src="/tiktok.webp"
+                      alt="Tiktok"
+                      width={18}
+                      height={18}
+                      className="opacity-80 transition-opacity"
+                    />
+                  </a>
                 </div>
               </div>
             </div>
@@ -457,7 +471,7 @@ export default function Footer() {
         whileInView={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.8 }}
         viewport={{ once: true }}
-        className="fixed bottom-6 right-6 z-50"
+        className="fixed bottom-20 right-6 z-50"
       >
         <motion.button
           ref={fabBtnRef}

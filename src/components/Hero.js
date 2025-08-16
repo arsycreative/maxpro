@@ -128,12 +128,21 @@ function PromoCards() {
 
   // id dari kartu yang sedang membuka popover kontak (null = tidak ada)
   const [openContactForId, setOpenContactForId] = useState(null);
+
+  // apakah popover harus muncul ke atas (true) atau ke bawah (false)
+  const [popoverUp, setPopoverUp] = useState(false);
+
+  // wrapper ref untuk tombol + popover
   const contactRef = useRef(null);
 
   // image preview state
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState(null);
   const [previewAlt, setPreviewAlt] = useState("");
+
+  // DOM ready (untuk createPortal aman di SSR)
+  const [domReady, setDomReady] = useState(false);
+  useEffect(() => setDomReady(true), []);
 
   // ambil data dari Supabase pada mount
   useEffect(() => {
@@ -188,11 +197,6 @@ function PromoCards() {
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  const [domReady, setDomReady] = useState(false);
-  useEffect(() => {
-    setDomReady(true);
   }, []);
 
   // auto slide
@@ -252,6 +256,42 @@ function PromoCards() {
       };
     }
   }, [previewOpen]);
+
+  // ---------- POPPER-LIKE LOGIC: Hitung apakah perlu buka popover ke atas ----------
+  const computeShouldOpenUp = () => {
+    if (!contactRef.current) return false;
+    const rect = contactRef.current.getBoundingClientRect();
+    const viewportHeight =
+      window.innerHeight || document.documentElement.clientHeight;
+
+    // perkiraan tinggi popover (ubah kalau popovermu lebih tinggi)
+    const estimatedPopoverHeight = 140;
+
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    // buka ke atas jika ruang bawah < popoverHeight dan ruang atas lebih lapang
+    return spaceBelow < estimatedPopoverHeight && spaceAbove > spaceBelow;
+  };
+
+  // Jika popover terbuka, rekalkulasi saat resize/scroll
+  useEffect(() => {
+    if (openContactForId === null) return;
+
+    const recompute = () => {
+      setPopoverUp(computeShouldOpenUp());
+    };
+
+    // recompute segera setelah open, dan juga saat resize / scroll (capture)
+    recompute();
+    window.addEventListener("resize", recompute);
+    window.addEventListener("scroll", recompute, true);
+
+    return () => {
+      window.removeEventListener("resize", recompute);
+      window.removeEventListener("scroll", recompute, true);
+    };
+  }, [openContactForId]);
 
   if (loading) {
     return (
@@ -400,11 +440,15 @@ function PromoCards() {
                 {/* Wrapper CTA (relative agar popover absoluted di dalamnya) */}
                 <div className="relative" ref={contactRef}>
                   <button
-                    onClick={() =>
+                    onClick={() => {
+                      // hitung dulu apakah perlu tampil ke atas
+                      const shouldOpenUp = computeShouldOpenUp();
+                      setPopoverUp(shouldOpenUp);
+
                       setOpenContactForId((prev) =>
                         prev === promo.id ? null : promo.id
-                      )
-                    }
+                      );
+                    }}
                     className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-md text-sm transition-colors duration-200"
                     aria-haspopup="menu"
                     aria-expanded={openContactForId === promo.id}
@@ -417,11 +461,21 @@ function PromoCards() {
                   <AnimatePresence>
                     {openContactForId === promo.id && (
                       <motion.div
-                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                        initial={{
+                          opacity: 0,
+                          y: popoverUp ? 6 : -6,
+                          scale: 0.98,
+                        }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                        exit={{
+                          opacity: 0,
+                          y: popoverUp ? 6 : -6,
+                          scale: 0.98,
+                        }}
                         transition={{ duration: 0.12 }}
-                        className="absolute right-0 mt-2 w-48 text-black bg-white rounded-lg shadow-lg border border-gray-100 z-20"
+                        className={`absolute right-0 w-48 text-black bg-white rounded-lg shadow-lg border border-gray-100 z-20 ${
+                          popoverUp ? "bottom-full mb-2" : "top-full mt-2"
+                        }`}
                         role="menu"
                       >
                         <button

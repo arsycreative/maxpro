@@ -1,84 +1,83 @@
 "use client";
-
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Eye, X } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 const AdvancedImageCarousel = () => {
+  const [images, setImages] = useState([]); // akan diisi dari Supabase
   const [previewIndex, setPreviewIndex] = useState(null);
   const [translateX, setTranslateX] = useState(0);
   const animationRef = useRef(null);
   const containerRef = useRef(null);
 
-  const images = [
-    {
-      id: 1,
-      url: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
-      alt: "Event Setup Professional",
-      title: "Event Setup",
-      description: "Setup profesional untuk berbagai acara",
-    },
-    {
-      id: 2,
-      url: "https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      alt: "Projector Setup Premium",
-      title: "Projector Setup",
-      description: "Proyektor berkualitas tinggi untuk presentasi",
-    },
-    {
-      id: 3,
-      url: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
-      alt: "TV LED Display Modern",
-      title: "TV LED Display",
-      description: "Display LED premium untuk semua kebutuhan",
-    },
-    {
-      id: 4,
-      url: "https://images.unsplash.com/photo-1750516028146-379e8095001e?q=80&w=1335&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      alt: "Speaker System Advanced",
-      title: "Speaker System",
-      description: "System audio berkualitas studio",
-    },
-    {
-      id: 5,
-      url: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
-      alt: "Conference Room Setup",
-      title: "Conference Room",
-      description: "Setup ruang konferensi lengkap",
-    },
-    {
-      id: 6,
-      url: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
-      alt: "Audio Visual Equipment",
-      title: "AV Equipment",
-      description: "Peralatan audio visual terdepan",
-    },
-    {
-      id: 7,
-      url: "https://images.unsplash.com/photo-1727096857692-e9dadf2bc92e?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      alt: "Professional Lighting",
-      title: "Lighting System",
-      description: "Sistem pencahayaan profesional",
-    },
-    {
-      id: 8,
-      url: "https://theoneupgroup.com/wp-content/uploads/2023/06/Rigging-Staging-The-One-Up-Group-scaled.jpeg",
-      alt: "Stage Equipment",
-      title: "Stage Setup",
-      description: "Peralatan panggung lengkap",
-    },
-  ];
+  // --- Fetch hanya kolom yang diperlukan ---
+  useEffect(() => {
+    let mounted = true;
+    const fetchGallery = async () => {
+      try {
+        const { data: rows, error } = await supabase
+          .from("gallery")
+          .select("id, title, description, image_url, image_path, category")
+          .order("created_at", { ascending: false })
+          .limit(200); // ubah kalau perlu
 
-  // Duplicate images for infinite effect (only double, not triple)
+        if (error) {
+          console.error("Supabase error:", error);
+          return;
+        }
+        if (!rows) return;
+
+        const processed = rows
+          .map((row) => {
+            let url = row.image_url || null;
+
+            // Jika memakai Supabase Storage path, buat public url
+            // Ganti 'gallery' di bawah dengan nama bucket storage Anda
+            if (!url && row.image_path) {
+              const { publicURL } = supabase.storage
+                .from("gallery")
+                .getPublicUrl(row.image_path);
+              url = publicURL;
+            }
+
+            return {
+              id: row.id,
+              url,
+              title: row.title || "Untitled",
+              description: row.description || "",
+              category: row.category || "",
+              alt: row.title || "gallery image",
+            };
+          })
+          // buang entri tanpa url
+          .filter((item) => item.url);
+
+        if (mounted) setImages(processed);
+      } catch (err) {
+        console.error("Fetch exception:", err);
+      }
+    };
+
+    fetchGallery();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // --- Carousel animation (infinite) ---
+  // kartu lebar (width + gap) tetap, tapi pastikan responsif sesuai desain
+  const cardWidth = 320;
   const duplicatedImages = [...images, ...images];
-  const cardWidth = 320; // Width + gap
   const totalWidth = duplicatedImages.length * cardWidth;
 
   useEffect(() => {
+    if (images.length === 0) return; // jangan animate kalau kosong
+
     const animate = () => {
       setTranslateX((prev) => {
         const newValue = prev - 1;
-        // Reset when we've moved one full set
         if (Math.abs(newValue) >= images.length * cardWidth) {
           return 0;
         }
@@ -90,12 +89,11 @@ const AdvancedImageCarousel = () => {
     animationRef.current = requestAnimationFrame(animate);
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [images.length, cardWidth]);
 
+  // --- Render ---
   return (
     <section className="relative bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 py-20 overflow-hidden min-h-screen flex items-center">
       {/* Background decorations */}
@@ -130,57 +128,56 @@ const AdvancedImageCarousel = () => {
             }}
             ref={containerRef}
           >
-            {duplicatedImages.map((image, index) => (
-              <div
-                key={`${image.id}-${Math.floor(index / images.length)}`}
-                className="flex-shrink-0 w-90 h-full px-4 group cursor-pointer"
-                onClick={() => setPreviewIndex(image.id - 1)}
-              >
-                <div className="relative w-full h-80 rounded-3xl overflow-hidden shadow-2xl border-4 border-white/20 hover:border-red-500/50 transition-all duration-700 hover:scale-105 hover:-translate-y-4 z-10">
-                  {/* Image - Perfect Square */}
-                  <Image
-                    src={image.url}
-                    alt={image.alt}
-                    fill
-                    className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                    draggable={false}
-                    sizes="320px"
-                  />
+            {duplicatedImages.map((image, index) => {
+              // index di duplicatedImages, tapi index % images.length
+              const originalIndex = index % images.length;
+              const item = duplicatedImages[index];
+              return (
+                <div
+                  key={`${item.id}-${Math.floor(index / images.length)}`}
+                  className="flex-shrink-0 w-90 h-full px-4 group cursor-pointer"
+                  onClick={() => setPreviewIndex(originalIndex)}
+                >
+                  <div className="relative w-full h-80 rounded-3xl overflow-hidden shadow-2xl border-4 border-white/20 hover:border-red-500/50 transition-all duration-700 hover:scale-105 hover:-translate-y-4 z-10">
+                    <Image
+                      src={item.url}
+                      alt={item.alt}
+                      fill
+                      className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                      draggable={false}
+                      sizes="320px"
+                    />
 
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80 transition-opacity duration-500"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80 transition-opacity duration-500"></div>
 
-                  {/* Content Overlay - Always Visible */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white transition-all duration-500">
-                    <h3 className="text-xl font-bold mb-2 drop-shadow-lg">
-                      {image.title}
-                    </h3>
-                    <p className="text-sm opacity-90 drop-shadow-md leading-relaxed">
-                      {image.description}
-                    </p>
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white transition-all duration-500">
+                      <h3 className="text-xl font-bold mb-2 drop-shadow-lg">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm opacity-90 drop-shadow-md leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-500 transform scale-75 group-hover:scale-100">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewIndex(originalIndex);
+                        }}
+                        className="bg-white/20 backdrop-blur-md text-white p-3 rounded-full hover:bg-white/30 transition-all duration-300 hover:scale-110 shadow-xl border border-white/30"
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="absolute -inset-2 rounded-3xl bg-gradient-to-r from-red-500/0 via-red-500/0 to-red-500/0 group-hover:from-red-500/20 group-hover:via-pink-500/20 group-hover:to-red-500/20 blur-xl transition-all duration-700 -z-10"></div>
                   </div>
-
-                  {/* View Icon */}
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-500 transform scale-75 group-hover:scale-100">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPreviewIndex(image.id - 1);
-                      }}
-                      className="bg-white/20 backdrop-blur-md text-white p-3 rounded-full hover:bg-white/30 transition-all duration-300 hover:scale-110 shadow-xl border border-white/30"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  {/* Hover Glow Effect */}
-                  <div className="absolute -inset-2 rounded-3xl bg-gradient-to-r from-red-500/0 via-red-500/0 to-red-500/0 group-hover:from-red-500/20 group-hover:via-pink-500/20 group-hover:to-red-500/20 blur-xl transition-all duration-700 -z-10"></div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Side Fade Effects - Responsive */}
           <div className="absolute top-0 left-0 w-20 md:w-40 h-full bg-gradient-to-r from-gray-200 to-transparent z-20 pointer-events-none"></div>
           <div className="absolute top-0 right-0 w-20 md:w-40 h-full bg-gradient-to-l from-gray-200 to-transparent z-20 pointer-events-none"></div>
         </div>
@@ -202,15 +199,15 @@ const AdvancedImageCarousel = () => {
         </div>
       </div>
 
-      {/* Enhanced Image Preview Modal */}
-      {previewIndex !== null && (
+      {/* Modal */}
+      {previewIndex !== null && images[previewIndex] && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex items-center justify-center p-6">
           <div className="relative max-w-6xl max-h-full animate-in zoom-in-95 duration-500">
             <Image
               src={images[previewIndex].url}
               alt={images[previewIndex].alt}
-              width={800}
-              height={800}
+              width={1000}
+              height={1000}
               className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl border-4 border-white/20"
             />
             <button
@@ -227,8 +224,6 @@ const AdvancedImageCarousel = () => {
                 {images[previewIndex].description}
               </p>
             </div>
-
-            {/* Modal Glow Effect */}
             <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-red-500/20 via-pink-500/20 to-red-500/20 blur-2xl -z-10"></div>
           </div>
         </div>
