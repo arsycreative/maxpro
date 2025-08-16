@@ -126,31 +126,45 @@ function PromoCards() {
   const [promoData, setPromoData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // id dari kartu yang sedang membuka popover kontak (null = tidak ada)
+  // id kartu yang sedang membuka popover
   const [openContactForId, setOpenContactForId] = useState(null);
 
-  // apakah popover harus muncul ke atas (true) atau ke bawah (false)
+  // apakah popover harus muncul ke atas
   const [popoverUp, setPopoverUp] = useState(false);
 
-  // wrapper ref untuk tombol + popover
+  // refs: tombol/area (anchor) dan popover (portal)
   const contactRef = useRef(null);
+  const popoverRef = useRef(null);
+
+  // gaya fixed popover yang dihitung
+  const [popoverFixedStyle, setPopoverFixedStyle] = useState(null);
 
   // image preview state
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSrc, setPreviewSrc] = useState(null);
   const [previewAlt, setPreviewAlt] = useState("");
 
-  // DOM ready (untuk createPortal aman di SSR)
+  // DOM ready (aman untuk portal di SSR)
   const [domReady, setDomReady] = useState(false);
   useEffect(() => setDomReady(true), []);
 
-  // ambil data dari Supabase pada mount
+  // perkiraan tinggi popover & margin
+  const estimatedPopoverHeight = 140;
+  const popoverMargin = 8;
+
+  // ---------------- Data fetch ----------------
   useEffect(() => {
     let isMounted = true;
 
     async function fetchPromos() {
       setLoading(true);
       try {
+        if (!supabase) {
+          throw new Error(
+            "Supabase client not found. Please import your supabase client."
+          );
+        }
+
         const { data, error } = await supabase
           .from("products")
           .select("*")
@@ -199,7 +213,7 @@ function PromoCards() {
     };
   }, []);
 
-  // auto slide
+  // ---------------- Auto slide ----------------
   useEffect(() => {
     if (!promoData || promoData.length === 0) return;
     const t = setInterval(
@@ -209,11 +223,13 @@ function PromoCards() {
     return () => clearInterval(t);
   }, [promoData.length]);
 
-  // klik di luar popover -> tutup
+  // ---------------- Click outside untuk popover ----------------
   useEffect(() => {
     function handleDocClick(e) {
-      if (!contactRef.current) return;
-      if (!contactRef.current.contains(e.target)) {
+      const target = e.target;
+      const inAnchor = contactRef.current?.contains(target);
+      const inPopover = popoverRef.current?.contains(target);
+      if (!inAnchor && !inPopover) {
         setOpenContactForId(null);
       }
     }
@@ -223,7 +239,7 @@ function PromoCards() {
     return () => document.removeEventListener("mousedown", handleDocClick);
   }, [openContactForId]);
 
-  // keyboard handler untuk preview (Esc)
+  // ---------------- Keyboard (Esc) ----------------
   useEffect(() => {
     function onKey(e) {
       if (e.key === "Escape") {
@@ -237,13 +253,13 @@ function PromoCards() {
     return () => document.removeEventListener("keyup", onKey);
   }, [previewOpen, openContactForId]);
 
-  // lock scroll saat preview terbuka
+  // ---------------- Lock scroll saat preview terbuka ----------------
   useEffect(() => {
     if (previewOpen) {
       const prevOverflow = document.body.style.overflow;
       const prevPaddingRight = document.body.style.paddingRight;
 
-      // Calculate scrollbar width to prevent layout shift
+      // hitung scrollbar width untuk cegah layout shift
       const scrollbarWidth =
         window.innerWidth - document.documentElement.clientWidth;
 
@@ -257,32 +273,58 @@ function PromoCards() {
     }
   }, [previewOpen]);
 
-  // ---------- POPPER-LIKE LOGIC: Hitung apakah perlu buka popover ke atas ----------
+  // ---------- POPPER-LIKE: compute apakah perlu ke atas ----------
   const computeShouldOpenUp = () => {
     if (!contactRef.current) return false;
     const rect = contactRef.current.getBoundingClientRect();
     const viewportHeight =
       window.innerHeight || document.documentElement.clientHeight;
 
-    // perkiraan tinggi popover (ubah kalau popovermu lebih tinggi)
-    const estimatedPopoverHeight = 140;
-
     const spaceBelow = viewportHeight - rect.bottom;
     const spaceAbove = rect.top;
 
-    // buka ke atas jika ruang bawah < popoverHeight dan ruang atas lebih lapang
     return spaceBelow < estimatedPopoverHeight && spaceAbove > spaceBelow;
   };
 
-  // Jika popover terbuka, rekalkulasi saat resize/scroll
+  // Hitung posisi popover dalam koordinat fixed (top + right)
+  const computePopoverPosition = (forceUp = null) => {
+    if (!contactRef.current) return;
+    const rect = contactRef.current.getBoundingClientRect();
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+
+    const shouldUp = forceUp !== null ? forceUp : computeShouldOpenUp();
+
+    let top;
+    if (shouldUp) {
+      top = rect.top - estimatedPopoverHeight - popoverMargin;
+      top = Math.max(8, top);
+    } else {
+      top = rect.bottom + popoverMargin;
+      const maxTop = (window.innerHeight || 1000) - 8 - 40;
+      top = Math.min(maxTop, top);
+    }
+
+    // kita anchor ke kanan tombol agar popover mengikuti posisi tombol saat responsif
+    const right = Math.max(8, Math.round(vw - rect.right));
+
+    setPopoverFixedStyle({
+      position: "fixed",
+      top: `${Math.round(top)}px`,
+      right: `${right}px`,
+      width: "min(220px, 90vw)", // responsive: max 220px atau 90vw
+    });
+    setPopoverUp(shouldUp);
+  };
+
+  // Jika popover terbuka: recompute saat buka, resize, scroll
   useEffect(() => {
     if (openContactForId === null) return;
 
     const recompute = () => {
-      setPopoverUp(computeShouldOpenUp());
+      const up = computeShouldOpenUp();
+      computePopoverPosition(up);
     };
 
-    // recompute segera setelah open, dan juga saat resize / scroll (capture)
     recompute();
     window.addEventListener("resize", recompute);
     window.addEventListener("scroll", recompute, true);
@@ -293,6 +335,34 @@ function PromoCards() {
     };
   }, [openContactForId]);
 
+  // ---------------- Actions ----------------
+  const openWhatsApp = (message) => {
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+    setOpenContactForId(null);
+  };
+
+  const openPortal = (portalUrl = "https://whatsform.com/10Gv8D") => {
+    window.open(portalUrl, "_blank", "noopener,noreferrer");
+    setOpenContactForId(null);
+  };
+
+  const openImagePreview = (src, alt = "") => {
+    if (!src) return;
+    setPreviewSrc(src);
+    setPreviewAlt(alt);
+    setPreviewOpen(true);
+  };
+
+  const closeImagePreview = () => {
+    setPreviewOpen(false);
+    setTimeout(() => {
+      setPreviewSrc(null);
+      setPreviewAlt("");
+    }, 200);
+  };
+
+  // ---------------- Render states awal ----------------
   if (loading) {
     return (
       <div className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-sm border border-gray-100">
@@ -315,37 +385,6 @@ function PromoCards() {
 
   const promo = promoData[currentSlide];
 
-  // buka wa dengan pesan (buka di tab baru)
-  const openWhatsApp = (message) => {
-    const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(waUrl, "_blank", "noopener,noreferrer");
-    setOpenContactForId(null);
-  };
-
-  // buka portal penyewaan
-  const openPortal = (portalUrl = "https://whatsform.com/10Gv8D") => {
-    window.open(portalUrl, "_blank", "noopener,noreferrer");
-    setOpenContactForId(null);
-  };
-
-  // buka preview gambar (hanya gambar)
-  const openImagePreview = (src, alt = "") => {
-    if (!src) return;
-    setPreviewSrc(src);
-    setPreviewAlt(alt);
-    setPreviewOpen(true);
-  };
-
-  // tutup preview
-  const closeImagePreview = () => {
-    setPreviewOpen(false);
-    // Delay clearing src to allow exit animation
-    setTimeout(() => {
-      setPreviewSrc(null);
-      setPreviewAlt("");
-    }, 200);
-  };
-
   return (
     <>
       <motion.div className="relative w-full max-w-md mx-auto bg-white p-3 rounded-lg shadow-sm border border-gray-100">
@@ -358,7 +397,7 @@ function PromoCards() {
             transition={{ duration: 0.38, ease: "easeOut" }}
             className="flex flex-col gap-3"
           >
-            {/* Gambar dengan hover effect dan zoom indicator */}
+            {/* Gambar */}
             <div className="relative rounded-md overflow-hidden w-full aspect-square max-h-80 group cursor-zoom-in">
               <div
                 className="relative w-full h-full"
@@ -373,7 +412,6 @@ function PromoCards() {
                       sizes="(max-width: 768px) 90vw, 320px"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-                    {/* Overlay untuk hover effect */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
                       <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
@@ -437,13 +475,12 @@ function PromoCards() {
                   {promo.suitable}
                 </span>
 
-                {/* Wrapper CTA (relative agar popover absoluted di dalamnya) */}
+                {/* Wrapper CTA (anchor) */}
                 <div className="relative" ref={contactRef}>
                   <button
                     onClick={() => {
-                      // hitung dulu apakah perlu tampil ke atas
                       const shouldOpenUp = computeShouldOpenUp();
-                      setPopoverUp(shouldOpenUp);
+                      computePopoverPosition(shouldOpenUp);
 
                       setOpenContactForId((prev) =>
                         prev === promo.id ? null : promo.id
@@ -456,54 +493,6 @@ function PromoCards() {
                     <MessageCircle className="w-4 h-4" />
                     <span>Hubungi</span>
                   </button>
-
-                  {/* Popover opsi */}
-                  <AnimatePresence>
-                    {openContactForId === promo.id && (
-                      <motion.div
-                        initial={{
-                          opacity: 0,
-                          y: popoverUp ? 6 : -6,
-                          scale: 0.98,
-                        }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{
-                          opacity: 0,
-                          y: popoverUp ? 6 : -6,
-                          scale: 0.98,
-                        }}
-                        transition={{ duration: 0.12 }}
-                        className={`absolute right-0 w-48 text-black bg-white rounded-lg shadow-lg border border-gray-100 z-20 ${
-                          popoverUp ? "bottom-full mb-2" : "top-full mt-2"
-                        }`}
-                        role="menu"
-                      >
-                        <button
-                          onClick={() =>
-                            openWhatsApp(
-                              `Halo, saya mau tanya tentang ${promo.title}`
-                            )
-                          }
-                          className="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-gray-50 transition-colors duration-150"
-                          role="menuitem"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          <span className="text-sm">WhatsApp</span>
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            openPortal("https://whatsform.com/10Gv8D")
-                          }
-                          className="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-gray-50 border-t border-gray-100 transition-colors duration-150"
-                          role="menuitem"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          <span className="text-sm">Portal Penyewaan</span>
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
               </div>
             </div>
@@ -511,7 +500,56 @@ function PromoCards() {
         </AnimatePresence>
       </motion.div>
 
-      {/* FIXED IMAGE PREVIEW MODAL */}
+      {/* === POPOVER via PORTAL (render ke body) === */}
+      {domReady &&
+        openContactForId === promo.id &&
+        popoverFixedStyle &&
+        createPortal(
+          <AnimatePresence>
+            <motion.div
+              ref={popoverRef}
+              key={`promo-popover-${promo.id}`}
+              initial={{
+                opacity: 0,
+                y: popoverUp ? 8 : -8,
+                scale: 0.98,
+              }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{
+                opacity: 0,
+                y: popoverUp ? 8 : -8,
+                scale: 0.98,
+              }}
+              transition={{ duration: 0.12 }}
+              style={popoverFixedStyle}
+              className={`fixed text-black bg-white rounded-lg shadow-lg border border-gray-100 z-[99999]`}
+              role="menu"
+            >
+              <button
+                onClick={() =>
+                  openWhatsApp(`Halo, saya mau tanya tentang ${promo.title}`)
+                }
+                className="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-gray-50 transition-colors duration-150"
+                role="menuitem"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span className="text-sm">WhatsApp</span>
+              </button>
+
+              <button
+                onClick={() => openPortal("https://whatsform.com/10Gv8D")}
+                className="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-gray-50 border-t border-gray-100 transition-colors duration-150"
+                role="menuitem"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span className="text-sm">Portal Penyewaan</span>
+              </button>
+            </motion.div>
+          </AnimatePresence>,
+          document.body
+        )}
+
+      {/* === FIXED IMAGE PREVIEW MODAL (PORTAL) === */}
       {domReady &&
         createPortal(
           <AnimatePresence>
