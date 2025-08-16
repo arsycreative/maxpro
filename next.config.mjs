@@ -13,6 +13,7 @@ const nextConfig = {
       "images.pexels.com",
       "images.squarespace-cdn.com",
       "unsplash.com",
+      "example.com",
     ],
   },
 };

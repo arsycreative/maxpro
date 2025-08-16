@@ -56,6 +56,7 @@ function AdminLayoutContent({ children }) {
   const navItems = [
     { label: "Dashboard", href: "/admin", icon: Home },
     { label: "Gallery", href: "/admin/gallery", icon: ImageIcon },
+    { label: "Berita", href: "/admin/news", icon: ImageIcon },
   ];
 
   const isActive = (href) => {

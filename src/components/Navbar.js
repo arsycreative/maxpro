@@ -27,6 +27,7 @@ export default function Navbar() {
     { name: "Home", href: "/" },
     { name: "Katalog", href: "/catalog" },
     { name: "Galeri", href: "/gallery" },
+    { name: "Berita", href: "/news" },
     { name: "Kontak", href: "/contact" },
   ];
 
