@@ -262,12 +262,14 @@ export default function AdminNewsManagement() {
     try {
       setUploading(true);
 
-      // Compression options - more aggressive for news images
+      // Compression options - lebih agresif untuk ukuran lebih kecil
       const options = {
-        maxSizeMB: 0.8, // Target smaller size for faster loading
-        maxWidthOrHeight: 1200, // Smaller max dimension
+        maxSizeMB: 0.25, // target ukuran sekitar 250KB
+        maxWidthOrHeight: 800, // maksimal dimensi lebih kecil
         useWebWorker: true,
-        initialQuality: 0.7, // Lower initial quality
+        initialQuality: 0.55, // kualitas awal lebih rendah
+        fileType: "image/webp", // konversi ke webp untuk ukuran lebih kecil
+        maxIteration: 10,
       };
 
       const compressedBlobOrFile = await imageCompression(
@@ -275,17 +277,18 @@ export default function AdminNewsManagement() {
         options
       );
 
-      const fileExt = (originalFile.name || "jpg").split(".").pop();
+      // buat file WebP dengan ekstensi yang sesuai
       const uploadFileName = `${Date.now()}-${Math.random()
         .toString(36)
-        .substring(2)}.${fileExt}`;
+        .substring(2)}.webp`;
       const compressedFile = new File([compressedBlobOrFile], uploadFileName, {
-        type: compressedBlobOrFile.type || originalFile.type,
+        type: compressedBlobOrFile.type || "image/webp",
       });
 
-      if (compressedFile.size > 3 * 1024 * 1024) {
+      // Batasi akhir: kalau masih > 1MB, tolak
+      if (compressedFile.size > 1 * 1024 * 1024) {
         showNotification(
-          "Ukuran file masih lebih dari 3MB setelah kompresi",
+          "Ukuran file masih lebih dari 1MB setelah kompresi. Coba gunakan gambar dengan resolusi lebih rendah.",
           "error"
         );
         setUploading(false);
