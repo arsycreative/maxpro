@@ -183,7 +183,7 @@ const AdvancedImageCarousel = () => {
         </div>
 
         {/* Bottom Info */}
-        <div className="text-center mt-16 px-6">
+        {/* <div className="text-center mt-16 px-6">
           <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-8 text-gray-600">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
@@ -196,7 +196,7 @@ const AdvancedImageCarousel = () => {
             <div className="hidden md:block w-px h-6 bg-gray-400"></div>
             <span className="text-lg font-medium">Premium Quality</span>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Modal */}
